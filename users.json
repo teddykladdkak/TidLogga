@@ -1,0 +1,7 @@
+{
+ "data": [{
+			"vgrid": "test3",
+			"namn": "Test Testsson",
+			"projekt": ["dw", "mat", "res", "utb", "sam"]
+		}]
+}

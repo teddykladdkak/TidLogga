@@ -1,0 +1,151 @@
+var http = require('http');
+var fs = require('fs');
+var path = require('path');
+const makeDir = require('make-dir');
+
+eval(fs.readFileSync('public/config.js')+'');
+
+//Startar server och tillåtna filer
+var server = http.createServer(function (request, response) {
+	var filePath = '.' + request.url;
+	if (filePath == './') {
+		filePath = config.location.index;
+	};
+	//Här radas alla tillåtna filer
+	var extname = path.extname(filePath);
+	var contentType = 'text/html';
+	switch (extname) {
+		case '.js':
+			contentType = 'text/javascript';
+			break;
+		case '.css':
+			contentType = 'text/css';
+			break;
+		case '.json':
+			contentType = 'application/json';
+			break;
+		case '.png':
+			contentType = 'image/png';
+			break;	  
+		case '.jpg':
+			contentType = 'image/jpg';
+			break;
+		case '.ico':
+			contentType = 'image/x-icon';
+			break;
+		case '.wav':
+			contentType = 'audio/wav';
+			break;
+	};
+	loadpage(filePath, extname, response, contentType);
+});
+
+function loadpage(filePath, extname, response, contentType){
+	//Säger till server att läsa och skicka fil till klient (Möjlighet att lägga till felmeddelanden)
+	fs.readFile('./public/' + filePath, function(error, content) {
+		if (error) {
+			if(error.code == 'ENOENT'){
+				fs.readFile('./404.html', function(error, content) {
+					response.writeHead(200, { 'Content-Type': contentType });
+					response.end(content, 'utf-8');
+				});
+			}
+			else {
+				response.writeHead(500);
+				response.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
+				response.end(); 
+			}
+		}
+		else {
+			response.writeHead(200, { 'Content-Type': contentType });
+			response.end(content, 'utf-8');
+		}
+	});
+};
+
+
+
+
+var allusers = [];
+function loadusers(){
+	//Laddar register där användarnamn är registrerade
+	var loadstorednames = JSON.parse(fs.readFileSync(config.location.users, 'utf8'));
+	//var storednames = loadstorednames.data;
+	global['allusers'] = loadstorednames.data;
+};
+makefile(config.location.users);
+loadusers();
+
+
+
+function makefile(file){
+	fs.readFile(file, (err, data) => {
+		if (err){
+			console.log('"' + file + '" finns inte, skapar ny fil.');
+			var texttowrite = JSON.parse('{"data": []}');
+			fs.writeFile(file, JSON.stringify(texttowrite, null, ' '), (err) => {
+				if (err){
+					console.log('Något gick fel i skapandet av ny fil.')
+				}else{
+					console.log('"' + file + '" skapad.');
+				};
+			});
+		};
+	});
+};
+
+
+
+// Loading socket.io
+var io = require('socket.io').listen(server);
+io.sockets.on('connection', function (socket, username) {
+	// When the client connects, they are sent a message
+	socket.emit('message', 'You are connected!');
+	socket.on('checkuser', function (vgrid) {
+		var finns = false;
+		var allusers = global['allusers'];
+		console.log(allusers);
+		for (var i = allusers.length - 1; i >= 0; i--) {
+			console.log(allusers[i].vgrid);
+			if(vgrid == allusers[i].vgrid){
+				var finns = allusers[i];
+			};
+		};
+		if(!finns){
+			socket.emit('erroranvandare', 'Användare kunde inte hittas: ' + vgrid);
+		}else{
+			socket.emit('anvandare', finns);
+		};
+	});
+	socket.on('checkprojekt', function (askdata) {
+		console.log(askdata);
+		makeDir('users/' + askdata.vgrid).then(path => {
+		    console.log('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
+		    makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
+		    fs.readFile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json', (err, data) => {
+				if (err){
+					console.log('Kunde inte läsa "users/' + askdata.vgrid + '/' + askdata.projekt + '.json".');
+				}else{
+					
+				};
+			});
+		});
+	});
+});
+//Kollar IP adress för server.
+function getIPAddress() {
+	var interfaces = require('os').networkInterfaces();
+	for (var devName in interfaces) {
+		var iface = interfaces[devName];
+		for (var i = 0; i < iface.length; i++) {
+			var alias = iface[i];
+			if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
+			return alias.address;
+		};
+	};
+	return '0.0.0.0';
+};
+var ip = getIPAddress();
+console.log(config.cmd.infolocal + ': http://localhost:' + config.port);
+console.log(config.cmd.infonetw + ': http://' + ip + ':' + config.port);
+server.listen(config.port);

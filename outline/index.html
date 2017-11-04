@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TidLogga</title>
+	<script type="text/javascript">
+		var anvandare = [{
+			vgrid: 'test3',
+			namn: 'Test Testsson',
+			projekt: ['dw', 'mat', 'res', 'utb', 'sam']
+		}]
+		var projekt = {
+			dw: {
+				namn: 'Digital Whiteboard'
+			},
+			mat: {
+				namn: 'MatAppen'
+			},
+			res: {
+				namn: 'Resor'
+			},
+			utb: {
+				namn: 'Utbildning/Föreläsning'
+			},
+			sam: {
+				namn: 'Sammordning'
+			}
+		};
+		var removeError;
+		var elemtohide = ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid'];
+		function load(){
+			for (var i = 0; i < elemtohide.length; i++){
+				document.getElementById(elemtohide[i]).setAttribute('style', 'display: none;');
+			};
+		};
+		function valjprojekt(){
+			var select = document.getElementById('listaprojekt');
+			if(select.value == 'none'){}else{
+				disablebuttons('in', 'ut');
+				var tidraknare = document.getElementById('tid');
+				tidraknare.setAttribute('data-projektid', select.value);
+				var projektnamn = document.getElementById('projektnamn');
+				removechilds(projektnamn);
+					var projektnamntext = document.createTextNode(projekt[select.value].namn);
+					projektnamn.appendChild(projektnamntext);
+				showhide('none', 'projektnamn');
+				showhide('projekt', 'klocka');
+				if(checksave(select.value) == 'none'){}else{
+					startclock('save', checksave(select.value))
+				};
+			};
+		};
+		function annantid(todo){
+			showhide('klocka', 'klockaannantid');
+			var button = document.getElementById('annantidbutton');
+			if(todo == 'in'){
+				button.setAttribute('value', 'Klocka in');
+				button.setAttribute('onclick', 'startclock("annat")');
+			}else if(todo == 'ut'){
+				button.setAttribute('value', 'Klocka ut');
+				button.setAttribute('onclick', 'stopclock("annat");');
+			}else{
+				console.log('Något gick fel i "annantid()".');
+			};
+			var datum = document.getElementById('dateannan');
+				datum.value = getDate().datum;
+			var tid = document.getElementById('timeannan');
+				tid.value = getDate().tid;
+		};
+		function addzero(number){
+			if(number <= 9){return "0" + number;}else{return number;};
+		};
+		function loggain(){
+			var nameinput = document.getElementById('idnamn');
+			var fail = 'japp';
+			for (var i = 0; i < anvandare.length; i++){
+				if(nameinput.value == anvandare[i].vgrid){
+					var listaprojekt = document.getElementById('listaprojekt');
+					for (var a = 0; a < anvandare[i].projekt.length; a++){
+						var option = document.createElement('option');
+							option.setAttribute('value', anvandare[i].projekt[a]);
+							var optiontext = document.createTextNode(projekt[anvandare[i].projekt[a]].namn);
+							option.appendChild(optiontext);
+						listaprojekt.appendChild(option);
+					};
+					var namn = document.getElementById('namn');
+						showhide('none', 'namn');
+						removechilds(namn);
+						var namntext = document.createTextNode('Välkommen ' + anvandare[i].namn);
+						namn.appendChild(namntext);
+					showhide('login', 'projekt');
+					var fail = 'nepp';
+				};
+			};
+			if(fail == 'japp'){
+				var error = document.getElementById('namnstatus');
+					removeerror();
+					var errortext = document.createTextNode('Användarnamn kunde inte hittas!');
+					error.appendChild(errortext);
+					clearTimeout(removeError);
+					removeError = setTimeout(function(){ removeerror(); }, 3000);
+				console.log('Användarnamn kunde inte hittas!');
+			};
+		};
+		function showhide(hide, show){
+			if(hide == 'none'){}else{
+				document.getElementById(hide).setAttribute('style', 'display: none;');
+			};
+			if(show == 'none'){}else{
+				document.getElementById(show).removeAttribute('style');
+			};
+		};
+		function removeerror(){
+			var error = document.getElementById('namnstatus');
+			removechilds(error);
+		};
+		function getDate(dateannan, timeannan, milisecsave){
+			console.log(milisecsave);
+			if(!dateannan && !timeannan && !milisecsave){
+				var date = new Date();
+			}else if(!milisecsave){
+				var annatdatum = dateannan.split('-');
+				var annattid = timeannan.split(':');
+				var date = new Date(annatdatum[0], annatdatum[1] - 1, annatdatum[2], annattid[0], annattid[1]);
+			}else{
+				console.log(milisecsave);
+				var date = new Date(parseInt(milisecsave));
+			};
+			var y = date.getFullYear();
+			var m = date.getMonth() + 1;
+			var d = date.getDate();
+			var h = date.getHours();
+			var mm = date.getMinutes();
+			var milisec = date.getTime();
+			var datum = y + '-' + addzero(m) + '-' + addzero(d);
+			var tid = addzero(h) + ':' + addzero(mm);
+			return {"datum": datum, "tid": tid, "milisec": milisec};
+		};
+		var countinterval;
+		function startclock(todo, startmilisec){
+			disablebuttons('ut', 'in');
+			if(todo == 'nu'){
+				var datum = getDate();
+			}else if(todo == 'annat'){
+				var dateannan = document.getElementById('dateannan').value;
+				var timeannan = document.getElementById('timeannan').value;
+				var datum = getDate(dateannan, timeannan);
+				showhide('klockaannantid', 'klocka');
+			}else if(todo == 'save'){
+				var datum = getDate('', '', startmilisec);
+			};
+			var tidwrapper = document.getElementById('intid');
+			removechilds(tidwrapper);
+				var tidwrappertext = document.createTextNode(datum.tid);
+				tidwrapper.appendChild(tidwrappertext);
+			var tidraknare = document.getElementById('tid');
+				tidraknare.setAttribute('data-milisec', datum.milisec);
+			savestart(datum.milisec)
+			clearInterval(countinterval);
+			startcount();
+			countinterval = setInterval(function(){ startcount(); }, 1000);
+		};
+		function startcount(){
+			var tidraknare = document.getElementById('tid');
+			var inmilisec = tidraknare.getAttribute('data-milisec');
+			var numilisec = getDate().milisec;
+			var timecalc = timebetween(inmilisec, numilisec);
+			removechilds(tidraknare);
+			var tidraknaretext = document.createTextNode(addzero(timecalc.t) + ':' + addzero(timecalc.m) + ':' + addzero(timecalc.s));
+			tidraknare.appendChild(tidraknaretext);
+		};
+		function timebetween(start, stop){
+			var sekunder = parseInt(stop) / 1000 - parseInt(start) / 1000;
+			var t = Math.floor(sekunder / 3600);
+			var m = Math.floor((sekunder / 60) - (t * 60));
+			var s = Math.floor(sekunder - (m * 60) - (t * 3600));
+			return {"t": t, "m": m, "s": s};
+		};
+		function stopclock(todo){
+			if(todo == 'nu'){
+				var datum = getDate();
+			}else if(todo == 'annat'){
+				var dateannan = document.getElementById('dateannan').value;
+				var timeannan = document.getElementById('timeannan').value;
+				var datum = getDate(dateannan, timeannan);
+			}else{
+				console.log('Något gick fel i "stopclock()".');
+			};
+			var startmilisec = document.getElementById('tid').getAttribute('data-milisec');
+			if(datum.milisec <= startmilisec){
+				document.getElementById('datumstatus');
+			}else{
+				disablebuttons('in', 'ut');
+				clearInterval(countinterval);
+				showhide('klockaannantid', 'klocka');
+				savestop(datum.milisec);
+			};
+		};
+		function tillbakatillprojekt(){
+			clearInterval(countinterval);
+			var projektnamn = document.getElementById('projektnamn');
+				backtostandard(projektnamn, 'XXXXXXXXX');
+			var intid = document.getElementById('intid');
+				backtostandard(intid, 'XX:XX');
+			var tid = document.getElementById('tid');
+				backtostandard(tid, 'XX:XX:XX');
+				tid.removeAttribute('data-milisec');
+			showhide('klocka', 'projekt');
+		};
+		function backtostandard(element, standard){
+			removechilds(element);
+			var text = document.createTextNode(standard);
+			element.appendChild(text);
+		};
+		function removechilds(parent){
+			while (parent.hasChildNodes()) {parent.removeChild(parent.firstChild);};
+		};
+		function savestart(millisecstart){
+			var projektid = document.getElementById('tid').getAttribute('data-projektid');
+			localStorage.setItem('tidloggain|' + projektid, millisecstart);
+		};
+		function savestop(millisecstop){
+			var projektid = document.getElementById('tid').getAttribute('data-projektid');
+			var starttid = localStorage.getItem('tidloggain|' + projektid);
+			if(!starttid){}else{
+				console.log(timebetween(starttid, millisecstop));
+			};
+			localStorage.removeItem('tidloggain|' + projektid);
+		};
+		function checksave(projektid){
+			var starttid = localStorage.getItem('tidloggain|' + projektid);
+			if(!starttid){
+				return 'none';
+			}else{
+				return starttid;
+			};
+		};
+		function disablebuttons(enable, disable){
+			var inelem = document.getElementsByClassName(enable);
+			for (var i = inelem.length - 1; i >= 0; i--) {
+				var klickfunc = inelem[i].getAttribute('data-onclick');
+				if(!klickfunc){}else{
+					inelem[i].setAttribute('onclick', klickfunc);
+					inelem[i].disabled = false;
+				};
+			};
+			var utelem = document.getElementsByClassName(disable);
+			for (var i = utelem.length - 1; i >= 0; i--) {
+				var klickfunc = utelem[i].getAttribute('onclick');
+				if(!klickfunc){}else{
+					utelem[i].setAttribute('data-onclick', klickfunc);
+					utelem[i].disabled = true;
+				};
+			};
+		};
+	</script>
+	<style type="text/css">
+		#header {
+			font-size: 20px;
+			vertical-align: top;
+			text-align: center;
+			width: 100%;
+		}
+		#head {
+			font-weight: bold;
+			font-family: verdana;
+			text-align: center;
+		}
+		.table {
+			display: table;
+		}
+		.tr {
+			display: table-row;
+		}
+		.td{
+			display: table-cell;
+		}
+		input, select, #klockadata {
+			zoom: 1.5;
+			margin: 5px;
+		}
+		#login, #projekt, #klocka, #klockaannantid{
+			border: solid #000 3px;
+		}
+		#namn {
+			text-align: left;
+		}
+		#projektnamn {
+			text-align: right;
+		}
+	</style>
+</head>
+<body onload="load();">
+	<div id="head">TidLogga</div>
+	<div id="header" class="table">
+		<div class="tr">
+			<div id="namn" class="td">Välkommen XXXX</div>
+			<div id="projektnamn" class="td">XXXXXXXXX</div>
+		</div>
+	</div>
+	<div id="login">
+		<input type="text" id="idnamn" placeholder="VGR ID"><span id="namnstatus"></span><br/>
+		<input type="button" value="Logga In" onclick="loggain();">
+	</div>
+	<div id="projekt">
+		<select id="listaprojekt">
+			<option value="none">Välj Projekt</option>
+		</select><br/>
+		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg"><input type="button" value="Skriv ut">
+	</div>
+	<div id="klocka">
+		<div id="klockadata">
+			<span id="intid">XX:XX</span> <span id="tid">XX:XX:XX</span>
+		</div>
+		<input type="button" value="Klocka in" class="in" onclick="startclock('nu')"><input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');">
+		<div class="table">
+			<div class="tr">
+				<div class="td">
+					<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');"><input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">
+				</div>
+				<div class="td">
+					<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="klockaannantid">
+		<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
+		<input type="button" id="annantidbutton" value="Klocka in/ut" onclick="startclock('annat')"><input type="button" id="annantidbutton" value="Avbryt" onclick="showhide('klockaannantid', 'klocka');">
+	</div>
+</body>
+</html>
