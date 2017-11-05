@@ -92,12 +92,7 @@
 				};
 			};
 			if(fail == 'japp'){
-				var error = document.getElementById('namnstatus');
-					removeerror();
-					var errortext = document.createTextNode('Användarnamn kunde inte hittas!');
-					error.appendChild(errortext);
-					clearTimeout(removeError);
-					removeError = setTimeout(function(){ removeerror(); }, 3000);
+				adderror('namnstatus', 'Användarnamn kunde inte hittas!');
 				console.log('Användarnamn kunde inte hittas!');
 			};
 		};
@@ -109,8 +104,16 @@
 				document.getElementById(show).removeAttribute('style');
 			};
 		};
-		function removeerror(){
-			var error = document.getElementById('namnstatus');
+		function adderror(id, text){
+			var error = document.getElementById(id);
+				removeerror(id);
+				var errortext = document.createTextNode(text);
+				error.appendChild(errortext);
+				clearTimeout(removeError);
+				removeError = setTimeout(function(){ removeerror(id); }, 3000);
+		};
+		function removeerror(id){
+			var error = document.getElementById(id);
 			removechilds(error);
 		};
 		function getDate(dateannan, timeannan, milisecsave){
@@ -187,7 +190,8 @@
 			};
 			var startmilisec = document.getElementById('tid').getAttribute('data-milisec');
 			if(datum.milisec <= startmilisec){
-				document.getElementById('datumstatus');
+				console.log('Du kan inte kocka ut innan du klockade in!');
+				adderror('datumstatus', 'Du kan inte kocka ut innan du klockade in!');
 			}else{
 				disablebuttons('in', 'ut');
 				clearInterval(countinterval);

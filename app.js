@@ -122,13 +122,72 @@ io.sockets.on('connection', function (socket, username) {
 		makeDir('users/' + askdata.vgrid).then(path => {
 		    console.log('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
 		    makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
-		    fs.readFile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json', (err, data) => {
+			fs.readFile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json', (err, data) => {
 				if (err){
 					console.log('Kunde inte läsa "users/' + askdata.vgrid + '/' + askdata.projekt + '.json".');
 				}else{
-					
+					var gammaldata = JSON.parse(data);
+					if(askdata.getall){
+						askdata.svar = gammaldata.data
+						socket.emit('sendlogg', askdata);
+					}else{
+						askdata.svar = 'none';
+						for (var i = gammaldata.data.length - 1; i >= 0; i--) {
+							if(!gammaldata.data[i].ut){
+								askdata.svar = gammaldata.data[i].in;
+							};
+						};
+						socket.emit('svarprojekt', askdata);
+					};
 				};
 			});
+		});
+	});
+	socket.on('klockain', function (inklockdata) {
+		var file = 'users/' + inklockdata.vgrid + '/' + inklockdata.projekt + '.json';
+		fs.readFile(file, (err, data) => {
+			if (err){
+				console.log(file + ' kunde inte läsas.');
+			}else{
+				var gammaldata = JSON.parse(data);
+				if(inklockdata.save){
+					socket.emit('startaklocka', inklockdata);
+				}else{
+					gammaldata.data.push({"in": inklockdata.datum});
+					fs.writeFile(file, JSON.stringify(gammaldata, null, ' '), (err) => {
+						if (err){
+							console.log('Något gick fel i skapandet av ny fil.')
+						}else{
+							console.log('"' + file + '" ändrad.');
+							socket.emit('startaklocka', inklockdata);
+						};
+					});
+				};
+			};
+		});
+	});
+
+	socket.on('stopklocka', function(utklockdata) {
+		var file = 'users/' + utklockdata.vgrid + '/' + utklockdata.projekt + '.json';
+		fs.readFile(file, (err, data) => {
+			if (err){
+				console.log(file + ' kunde inte läsas.');
+			}else{
+				var gammaldata = JSON.parse(data);
+				for (var i = gammaldata.data.length - 1; i >= 0; i--) {
+					if(!gammaldata.data[i].ut){
+						gammaldata.data[i].ut = utklockdata.datum;
+					};
+				};
+				fs.writeFile(file, JSON.stringify(gammaldata, null, ' '), (err) => {
+					if (err){
+						console.log('Något gick fel i skapandet av ny fil.')
+					}else{
+						console.log('"' + file + '" ändrad.');
+						socket.emit('stopklocka', utklockdata);
+					};
+				});
+			};
 		});
 	});
 });

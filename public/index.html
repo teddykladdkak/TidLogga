@@ -15,32 +15,136 @@
 				document.getElementById(config.elemtohide[i]).setAttribute('style', 'display: none;');
 			};
 		};
-		function loggain(){
-			var nameinput = document.getElementById('idnamn').value;
-			socket.emit('checkuser', nameinput);
-		};
 		function removechilds(parent){while (parent.hasChildNodes()) {parent.removeChild(parent.firstChild);};};
 		function showhide(hide, show){if(hide == 'none'){}else{document.getElementById(hide).setAttribute('style', 'display: none;');};if(show == 'none'){}else{document.getElementById(show).removeAttribute('style');};};
-		function removeerror(){var error = document.getElementById('namnstatus');removechilds(error);};
-		function disablebuttons(enable, disable){var inelem = document.getElementsByClassName(enable);for (var i = inelem.length - 1; i >= 0; i--) {var klickfunc = inelem[i].getAttribute('data-onclick');if(!klickfunc){}else{inelem[i].setAttribute('onclick', klickfunc);inelem[i].disabled = false;};};var utelem = document.getElementsByClassName(disable);for (var i = utelem.length - 1; i >= 0; i--) {var klickfunc = utelem[i].getAttribute('onclick');if(!klickfunc){}else{utelem[i].setAttribute('data-onclick', klickfunc);utelem[i].disabled = true;};};};
-		function valjprojekt(){
-			var select = document.getElementById('listaprojekt');
-			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
-			if(select.value == 'none'){}else{
-				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid});
+		var removeError;
+		function adderror(id, text){
+			var error = document.getElementById(id);
+				removeerror(id);
+				var errortext = document.createTextNode(text);
+				error.appendChild(errortext);
+				clearTimeout(removeError);
+				removeError = setTimeout(function(){ removeerror(id); }, 3000);
+		};
+		function removeerror(id){
+			var error = document.getElementById(id);
+			removechilds(error);
+		};
+		function disablebuttons(id){
+			var utelem = document.getElementsByClassName(id);
+			for (var i = utelem.length - 1; i >= 0; i--) {
+				var klickfunc = utelem[i].getAttribute('onclick');
+				if(!klickfunc){}else{
+					utelem[i].setAttribute('data-onclick', klickfunc);
+					utelem[i].disabled = true;
+				};
+			};
+		};
+		function enablebuttons(id){
+			var inelem = document.getElementsByClassName(id);
+			for (var i = inelem.length - 1; i >= 0; i--) {
+				var klickfunc = inelem[i].getAttribute('data-onclick');
+				if(!klickfunc){}else{
+					inelem[i].setAttribute('onclick', klickfunc);
+					inelem[i].disabled = false;
+				};
+			};
+		};
+		function addzero(number){if(number <= 9){return "0" + number;}else{return number;};};
+		function timebetween(start, stop){var sekunder = parseInt(stop) / 1000 - parseInt(start) / 1000;var t = Math.floor(sekunder / 3600);var m = Math.floor((sekunder / 60) - (t * 60));var s = Math.floor(sekunder - (m * 60) - (t * 3600));return {"t": t, "m": m, "s": s};};
+		function backtostandard(element, standard){removechilds(element);var text = document.createTextNode(standard);element.appendChild(text);};
+		var countinterval;
+		function startcount(){
+			var tidraknare = document.getElementById('tid');
+			var inmilisec = tidraknare.getAttribute('data-milisec');
+			var numilisec = getDate().milisec;
+			var timecalc = timebetween(inmilisec, numilisec);
+			removechilds(tidraknare);
+			var tidraknaretext = document.createTextNode(addzero(timecalc.t) + ':' + addzero(timecalc.m) + ':' + addzero(timecalc.s));
+			tidraknare.appendChild(tidraknaretext);
+		};
+		function getDate(dateannan, timeannan, milisecsave){
+			if(!dateannan && !timeannan && !milisecsave){
+				var date = new Date();
+			}else if(!milisecsave){
+				var annatdatum = dateannan.split('-');
+				var annattid = timeannan.split(':');
+				var date = new Date(annatdatum[0], annatdatum[1] - 1, annatdatum[2], annattid[0], annattid[1]);
+			}else{
+				console.log(milisecsave);
+				var date = new Date(parseInt(milisecsave));
+			};
+			var y = date.getFullYear();
+			var m = date.getMonth() + 1;
+			var d = date.getDate();
+			var h = date.getHours();
+			var mm = date.getMinutes();
+			var milisec = date.getTime();
+			var datum = y + '-' + addzero(m) + '-' + addzero(d);
+			var tid = addzero(h) + ':' + addzero(mm);
+			return {"datum": datum, "tid": tid, "milisec": milisec};
+		};
+		function tillbakatillprojekt(){
+			clearInterval(countinterval);
+			var projektnamn = document.getElementById('projektnamn');
+				backtostandard(projektnamn, 'XXXXXXXXX');
+				showhide('projektnamn', 'none');
+			var intid = document.getElementById('intid');
+				backtostandard(intid, 'XX:XX');
+			var tid = document.getElementById('tid');
+				backtostandard(tid, 'XX:XX:XX');
+				tid.removeAttribute('data-milisec');
+				tid.removeAttribute('data-projektid');
+			showhide('klocka', 'projekt');
+		};
+		function annantid(todo){
+			showhide('klocka', 'klockaannantid');
+			var button = document.getElementById('annantidbutton');
+			if(todo == 'in'){
+				button.setAttribute('value', 'Klocka in');
+				button.setAttribute('onclick', 'startclock("annat")');
+			}else if(todo == 'ut'){
+				button.setAttribute('value', 'Klocka ut');
+				button.setAttribute('onclick', 'stopclock("annat");');
+			}else{
+				console.log('Något gick fel i "annantid()".');
+			};
+			var datum = document.getElementById('dateannan');
+				datum.value = getDate().datum;
+			var tid = document.getElementById('timeannan');
+				tid.value = getDate().tid;
+		};
+		function numbertotext(num){var numsplit = num.split('');var result = [];for (var i = numsplit.length - 1; i >= 0; i--) {if(numsplit[i] == '0'){result.push('noll');}else if(numsplit[i] == '1'){result.push('ett');}else if(numsplit[i] == '2'){result.push('tva');}else if(numsplit[i] == '3'){result.push('tre');}else if(numsplit[i] == '4'){result.push('fyra');}else if(numsplit[i] == '5'){result.push('fem');}else if(numsplit[i] == '6'){result.push('sex');}else if(numsplit[i] == '7'){result.push('sju');}else if(numsplit[i] == '8'){result.push('atta');}else if(numsplit[i] == '9'){result.push('nio');}else{result.push('vetej');};};return result.join('');};
+		function manadtotext(num){
+			if(num == '1'){
+				return 'Januari';
+			}else if(num == '2'){
+				return 'Februari';
+			}else if(num == '3'){
+				return 'Mars';
+			}else if(num == '4'){
+				return 'April';
+			}else if(num == '5'){
+				return 'Maj';
+			}else if(num == '6'){
+				return 'Juni';
+			}else if(num == '7'){
+				return 'Juli';
+			}else if(num == '8'){
+				return 'Augusti';
+			}else if(num == '9'){
+				return 'September';
+			}else if(num == '10'){
+				return 'Oktober';
+			}else if(num == '11'){
+				return 'November';
+			}else if(num == '12'){
+				return 'December';
+			}else{
+				return 'Vet inte';
 			};
 		};
 	</script>
-	<!--
-	disablebuttons('in', 'ut');
-				var tidraknare = document.getElementById('tid');
-				tidraknare.setAttribute('data-projektid', select.value);
-				var projektnamn = document.getElementById('projektnamn');
-				removechilds(projektnamn);
-					var projektnamntext = document.createTextNode(projekt[select.value].namn);
-					projektnamn.appendChild(projektnamntext);
-				showhide('none', 'projektnamn');
-				showhide('projekt', 'klocka');-->
 	<style type="text/css">
 		#header {
 			font-size: 20px;
@@ -66,7 +170,7 @@
 			zoom: 1.5;
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper{
 			border: solid #000 3px;
 		}
 		#namn {
@@ -93,7 +197,7 @@
 		<select id="listaprojekt">
 			<option value="none">Välj Projekt</option>
 		</select><br/>
-		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg"><input type="button" value="Skriv ut">
+		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut">
 	</div>
 	<div id="klocka">
 		<div id="klockadata">
@@ -115,7 +219,9 @@
 		<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
 		<input type="button" id="annantidbutton" value="Klocka in/ut" onclick="startclock('annat')"><input type="button" id="annantidbutton" value="Avbryt" onclick="showhide('klockaannantid', 'klocka');">
 	</div>
-
+	<div id="loggwrapper">
+		
+	</div>
 
 
 
@@ -132,6 +238,11 @@
 			console.log(message);
 		});
 
+		function loggain(){
+			var nameinput = document.getElementById('idnamn').value;
+			socket.emit('checkuser', nameinput);
+		};
+
 		socket.on('anvandare', function(responsdata) {
 			console.log(responsdata);
 			document.getElementById('tid').setAttribute('data-vgrid', responsdata.vgrid);
@@ -147,19 +258,192 @@
 					option.appendChild(optiontext);
 				listaprojekt.appendChild(option);
 			};
+			showhide('none', 'namn');
 			showhide('login', 'projekt');
 		});
 
-		var removeError;
 		socket.on('erroranvandare', function(message) {
-			var error = document.getElementById('namnstatus');
-				removeerror();
-				var errortext = document.createTextNode('Användarnamn kunde inte hittas!');
-				error.appendChild(errortext);
-				clearTimeout(removeError);
-				removeError = setTimeout(function(){ removeerror(); }, 3000);
+			adderror('namnstatus', 'Användarnamn kunde inte hittas!');
 			console.log('Användarnamn kunde inte hittas!');
 		});
+
+		function valjprojekt(){
+			var select = document.getElementById('listaprojekt');
+			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
+			if(select.value == 'none'){}else{
+				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": false});
+			};
+		};
+
+		socket.on('svarprojekt', function(responsdata) {
+			console.log(responsdata);
+			var tidraknare = document.getElementById('tid');
+					tidraknare.setAttribute('data-projektid', responsdata.projekt);
+				var projektnamn = document.getElementById('projektnamn');
+					removechilds(projektnamn);
+					var projektnamntext = document.createTextNode(config.projekt[responsdata.projekt].namn);
+					projektnamn.appendChild(projektnamntext);
+				showhide('none', 'projektnamn');
+				showhide('projekt', 'klocka');
+			if(responsdata.svar == 'none'){
+				enablebuttons('in')
+				disablebuttons('ut')
+			}else{
+				startclock('save', responsdata.svar.milisec);
+			};
+		});
+
+		function startclock(todo, startmilisec){
+			disablebuttons('ut');
+			disablebuttons('in');
+			var save = false;
+			if(todo == 'nu'){
+				var datum = getDate();
+			}else if(todo == 'annat'){
+				var dateannan = document.getElementById('dateannan').value;
+				var timeannan = document.getElementById('timeannan').value;
+				var datum = getDate(dateannan, timeannan);
+				showhide('klockaannantid', 'klocka');
+			}else if(todo == 'save'){
+				var datum = getDate('', '', startmilisec);
+				var save = true;
+			};
+			var tidraknare = document.getElementById('tid');
+			var projektid = tidraknare.getAttribute('data-projektid');
+			var vgrid = tidraknare.getAttribute('data-vgrid');
+			socket.emit('klockain', {"projekt": projektid, "vgrid": vgrid, "datum": datum, "save": save});
+		};
+
+		socket.on('startaklocka', function(inklockdata) {
+			console.log(inklockdata);
+			enablebuttons('ut');
+			disablebuttons('in');
+			var tidwrapper = document.getElementById('intid');
+			removechilds(tidwrapper);
+				var tidwrappertext = document.createTextNode(inklockdata.datum.tid);
+				tidwrapper.appendChild(tidwrappertext);
+			var tidraknare = document.getElementById('tid');
+				tidraknare.setAttribute('data-milisec', inklockdata.datum.milisec);
+			clearInterval(countinterval);
+			startcount();
+			countinterval = setInterval(function(){ startcount(); }, 1000);
+		});
+
+
+		function stopclock(todo){
+			if(todo == 'nu'){
+				var datum = getDate();
+			}else if(todo == 'annat'){
+				var dateannan = document.getElementById('dateannan').value;
+				var timeannan = document.getElementById('timeannan').value;
+				var datum = getDate(dateannan, timeannan);
+			}else{
+				console.log('Något gick fel i "stopclock()".');
+			};
+			var startmilisec = document.getElementById('tid').getAttribute('data-milisec');
+			if(datum.milisec <= startmilisec){
+				adderror('datumstatus', 'Du kan inte kocka ut innan du klockade in!');
+			}else{
+				disablebuttons('ut');
+				disablebuttons('in');
+				clearInterval(countinterval);
+				showhide('klockaannantid', 'klocka');
+				var tidraknare = document.getElementById('tid');
+				var projektid = tidraknare.getAttribute('data-projektid');
+				var vgrid = tidraknare.getAttribute('data-vgrid');
+				socket.emit('stopklocka', {"projekt": projektid, "vgrid": vgrid, "datum": datum});
+			};
+		};
+
+		socket.on('stopklocka', function(inklockdata) {
+			enablebuttons('in');
+			disablebuttons('ut');
+		});
+
+		function getlogg(){
+			var select = document.getElementById('listaprojekt');
+			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
+			if(select.value == 'none'){}else{
+				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": true});
+			};
+		};
+
+		socket.on('sendlogg', function(loggdata) {
+			console.log(loggdata);
+			var loggwrapper = document.getElementById('loggwrapper');
+			removechilds(loggwrapper);
+			for (var i = loggdata.svar.length - 1; i >= 0; i--) {
+				addwrapperelemlogg(loggdata.svar[i]);	
+			};
+		});
+
+		function addwrapperelemlogg(loggdata){
+
+			var loggwrapper = document.getElementById('loggwrapper');
+			var datumsplit = loggdata.in.datum.split('-');
+			var artext = 'loggar' + numbertotext(datumsplit[0]);
+			var manadtext = 'loggar' + numbertotext(datumsplit[1]);
+			var dagtext = 'loggar' + numbertotext(datumsplit[2]);
+			var ar = document.getElementById(artext);
+			if(!ar){
+				var arelem = document.createElement('div');
+					arelem.setAttribute('id', artext);
+				loggwrapper.appendChild(arelem);
+			};
+
+			var manad = document.getElementById(artext + manadtext);
+			if(!manad){
+				var manadelem = document.createElement('table');
+					manadelem.setAttribute('id', artext + manadtext);
+					var trhead = document.createElement('tr');
+						var tdhead = document.createElement('td');
+							tdhead.setAttribute('colspan', '3');
+							var tdheadtext = document.createTextNode(manadtotext(parseInt(datumsplit[1])));
+							tdhead.appendChild(tdheadtext);
+						trhead.appendChild(tdhead);
+					manadelem.appendChild(trhead);
+				document.getElementById(artext).appendChild(manadelem);
+			};
+
+			var dag = document.getElementById(artext + manadtext + dagtext);
+			if(!dag){
+				var dagelem = document.createElement('tr');
+					dagelem.setAttribute('id', artext + manadtext + dagtext);
+					var datum = document.createElement('td');
+						datum.setAttribute('rowspan', '1');
+						var datumtext = document.createTextNode(loggdata.in.datum);
+						datum.appendChild(datumtext);
+					dagelem.appendChild(datum);
+					addinfologg(dagelem, loggdata)
+				document.getElementById(artext + manadtext).appendChild(dagelem);
+			}else{
+				var datumelem = dag.getElementsByTagName('td')[0];
+					datumelem.setAttribute('rowspan', parseInt(datumelem.getAttribute('rowspan')) + 1);
+				var dagelem = document.createElement('tr');
+					addinfologg(dagelem, loggdata);
+				dag.parentNode.insertBefore(dagelem, dag.nextSibling);
+			};
+		};
+
+		function addinfologg(elem, loggdata){
+			var tidin = document.createElement('td');
+				var tidintext = document.createTextNode(loggdata.in.tid);
+				tidin.appendChild(tidintext);
+			elem.appendChild(tidin);
+			var tidut = document.createElement('td');
+			if(!loggdata.ut){}else{
+				var tiduttext = document.createTextNode(loggdata.ut.tid);
+				tidut.appendChild(tiduttext);
+			};
+			elem.appendChild(tidut);
+			var tidmellan = document.createElement('td');
+			if(!loggdata.ut){}else{
+				var timedata = timebetween(loggdata.in.milisec, loggdata.ut.milisec);
+				var tidmellantext = document.createTextNode(addzero(timedata.t) + ':' + addzero(timedata.m) + ':' + addzero(timedata.s));
+				tidmellan.appendChild(tidmellantext);
+			};
+			elem.appendChild(tidmellan);
+		};
 	</script>
 </body>
 </html>

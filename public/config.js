@@ -13,7 +13,7 @@ var config = {
 		infonetw:'Nätverket',
 		infoturnoff: 'Stäng av server med "CTRL+C"'
 	},
-	elemtohide: [/*'namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid'*/],
+	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid'],
 	projekt: {
 		dw: {
 			namn: 'Digital Whiteboard'
