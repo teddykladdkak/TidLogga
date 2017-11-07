@@ -51,7 +51,17 @@
 			};
 		};
 		function addzero(number){if(number <= 9){return "0" + number;}else{return number;};};
-		function timebetween(start, stop){var sekunder = parseInt(stop) / 1000 - parseInt(start) / 1000;var t = Math.floor(sekunder / 3600);var m = Math.floor((sekunder / 60) - (t * 60));var s = Math.floor(sekunder - (m * 60) - (t * 3600));return {"t": t, "m": m, "s": s};};
+		function timebetween(start, stop, millisec){
+			if(!millisec){
+				var sekunder = parseInt(stop) / 1000 - parseInt(start) / 1000;
+			}else{
+				var sekunder = parseInt(millisec) / 1000;
+			};
+			var t = Math.floor(sekunder / 3600);
+			var m = Math.floor((sekunder / 60) - (t * 60));
+			var s = Math.floor(sekunder - (m * 60) - (t * 3600));
+			return {"t": t, "m": m, "s": s};
+		};
 		function backtostandard(element, standard){removechilds(element);var text = document.createTextNode(standard);element.appendChild(text);};
 		var countinterval;
 		function startcount(){
@@ -115,34 +125,39 @@
 				tid.value = getDate().tid;
 		};
 		function numbertotext(num){var numsplit = num.split('');var result = [];for (var i = numsplit.length - 1; i >= 0; i--) {if(numsplit[i] == '0'){result.push('noll');}else if(numsplit[i] == '1'){result.push('ett');}else if(numsplit[i] == '2'){result.push('tva');}else if(numsplit[i] == '3'){result.push('tre');}else if(numsplit[i] == '4'){result.push('fyra');}else if(numsplit[i] == '5'){result.push('fem');}else if(numsplit[i] == '6'){result.push('sex');}else if(numsplit[i] == '7'){result.push('sju');}else if(numsplit[i] == '8'){result.push('atta');}else if(numsplit[i] == '9'){result.push('nio');}else{result.push('vetej');};};return result.join('');};
-		function manadtotext(num){
-			if(num == '1'){
-				return 'Januari';
-			}else if(num == '2'){
-				return 'Februari';
-			}else if(num == '3'){
-				return 'Mars';
-			}else if(num == '4'){
-				return 'April';
-			}else if(num == '5'){
-				return 'Maj';
-			}else if(num == '6'){
-				return 'Juni';
-			}else if(num == '7'){
-				return 'Juli';
-			}else if(num == '8'){
-				return 'Augusti';
-			}else if(num == '9'){
-				return 'September';
-			}else if(num == '10'){
-				return 'Oktober';
-			}else if(num == '11'){
-				return 'November';
-			}else if(num == '12'){
-				return 'December';
-			}else{
-				return 'Vet inte';
+		function manadtotext(num){return config.manader[parseInt(num) - 1]};
+		function loggsort(loggdata) {
+			var allmillisec = [];
+			for (var i = loggdata.length - 1; i >= 0; i--) {
+				if(!loggdata[i].ut){
+					var valtoadd = loggdata[i].in.milisec;
+					var zerostoadd = loggdata[i].in.milisec.toString().split('');
+					for (var a = zerostoadd.length - 1; a >= 0; a--) {
+						var valtoadd = valtoadd + '0';
+					};
+				}else{
+					var valtoadd = loggdata[i].in.milisec + '' + loggdata[i].ut.milisec;	
+				};
+				allmillisec.push(valtoadd);
 			};
+			allmillisec.sort();
+			var sortedarray = [];
+			for (var i = allmillisec.length - 1; i >= 0; i--) {
+				var ammount = allmillisec[i].toString().length;
+				var half =  ammount / 2;
+				var inmillisec = allmillisec[i].slice(0, half);
+				var utmillisec = allmillisec[i].slice(half, ammount);
+				for (var a = loggdata.length - 1; a >= 0; a--) {
+					if(loggdata[a].in.milisec == inmillisec){
+						if(parseInt(utmillisec) == 0){
+							sortedarray.push(loggdata[a]);
+						}else if(loggdata[a].ut.milisec == utmillisec){
+							sortedarray.push(loggdata[a]);
+						};
+					};
+				};
+			};
+			return sortedarray;
 		};
 	</script>
 	<style type="text/css">
@@ -179,6 +194,23 @@
 		#projektnamn {
 			text-align: right;
 		}
+		#loggwrapper{
+			padding: 10px 10px 0px 10px;
+		}
+		#loggwrapper table{
+			margin-bottom: 10px;
+		}
+		#loggwrapper table, #loggwrapper table td{
+			border-collapse: collapse;
+			border: solid 2px #000;
+		}
+		/*#loggwrapper table, #loggwrapper table tr{
+			width: 100%;
+			text-align: center;
+		}
+		#loggwrapper table tr:nth-child(0), #loggwrapper table tr:nth-child(1){
+			text-align: left;
+		}*/
 	</style>
 </head>
 <body onload="load();">
@@ -271,7 +303,7 @@
 			var select = document.getElementById('listaprojekt');
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			if(select.value == 'none'){}else{
-				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": false});
+				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": false, "checkaktiv": true});
 			};
 		};
 
@@ -350,8 +382,9 @@
 				showhide('klockaannantid', 'klocka');
 				var tidraknare = document.getElementById('tid');
 				var projektid = tidraknare.getAttribute('data-projektid');
+				var startdatum = getDate('', '', tidraknare.getAttribute('data-milisec')).datum;
 				var vgrid = tidraknare.getAttribute('data-vgrid');
-				socket.emit('stopklocka', {"projekt": projektid, "vgrid": vgrid, "datum": datum});
+				socket.emit('stopklocka', {"projekt": projektid, "vgrid": vgrid, "datum": datum, "startdatum": startdatum});
 			};
 		};
 
@@ -364,21 +397,99 @@
 			var select = document.getElementById('listaprojekt');
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			if(select.value == 'none'){}else{
+				var loggwrapper = document.getElementById('loggwrapper');
+				removechilds(loggwrapper);
+				var datum = getDate().datum;
+				socket.emit('checkprojekt', {"projekt": select.value, "datum": datum, "vgrid": vgrid, "getall": true, "checkaktiv": false});
+			};
+			/*
+			if(select.value == 'none'){}else{
 				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": true});
 			};
-		};
-
-		socket.on('sendlogg', function(loggdata) {
-			console.log(loggdata);
 			var loggwrapper = document.getElementById('loggwrapper');
 			removechilds(loggwrapper);
-			for (var i = loggdata.svar.length - 1; i >= 0; i--) {
-				addwrapperelemlogg(loggdata.svar[i]);	
+			*/
+		};
+		
+		socket.on('sendlogg', function(loggdata) {
+			var loggwrapper = document.getElementById('loggwrapper');
+			var month = document.createElement('select');
+			for (var a = 0; a < loggdata.mothtoload.length; a++){
+				var option = document.createElement('option');
+					option.setAttribute('value', loggdata.mothtoload);
+					var optiontext = document.createTextNode(loggdata.mothtoload[a]);
+					option.appendChild(optiontext);
+				month.appendChild(option);
 			};
+			loggwrapper.appendChild(month);
+			var datumsplit = loggdata.datum.split('-');
+			month.value = datumsplit[0] + '-' + datumsplit[1];
+			var loggsorted = loggsort(loggdata.svar.data);
+			var tableelem = document.createElement('table');
+			console.log(loggdata.svar.data);
+			for (var i = 0; i < loggsorted.length; i++){
+				addlogglist(loggsorted[i], tableelem);
+			};
+			loggwrapper.appendChild(tableelem);
+			/*console.log(loggdata);
+			var loggsorted = loggsort(loggdata.svar);
+			for (var i = 0; i < loggsorted.length; i++){
+				addwrapperelemlogg(loggsorted[i]);	
+			};
+			countday(loggdata.projekt);*/
 		});
-
+		function addlogglist(loggdata, tableelem){
+			var line = document.createElement('tr');
+				var tddatum = document.createElement('td');
+					tddatum.setAttribute('onclick', 'makeinput(this, "date");');
+					var tddatumtext = document.createTextNode(loggdata.in.datum);
+					tddatum.appendChild(tddatumtext);
+				line.appendChild(tddatum);
+				var intid = document.createElement('td');
+					intid.setAttribute('onclick', 'makeinput(this, "time");');
+					var intidtext = document.createTextNode(loggdata.in.tid);
+					intid.appendChild(intidtext);
+				line.appendChild(intid);
+				var uttid = document.createElement('td');
+					uttid.setAttribute('onclick', 'makeinput(this, "time");');
+				if(!loggdata.ut){}else{
+					var uttidtext = document.createTextNode(loggdata.ut.tid);
+					uttid.appendChild(uttidtext);
+				};
+				line.appendChild(uttid);
+				var remove = document.createElement('td');
+					var removeinput = document.createElement('input');
+						removeinput.setAttribute('type', 'button');
+						removeinput.setAttribute('value', 'Ta bort');
+						removeinput.setAttribute('class', 'loggbutton');
+						removeinput.setAttribute('data-milisecin', loggdata.in.milisec);
+					if(!loggdata.ut){}else{
+						removeinput.setAttribute('data-milisecut', loggdata.ut.milisec);
+					};
+						removeinput.setAttribute('onclick', 'removesegment(this);');
+					remove.appendChild(removeinput);
+				line.appendChild(remove);
+			tableelem.appendChild(line);
+		};
+		function removesegment(element){
+			console.log(element);
+		};
+		function makeinput(element, typ){
+			var val = element.innerText;
+			removechilds(element);
+			var input = document.createElement('input');
+				input.setAttribute('type', typ);
+				input.setAttribute('value', val);
+			element.appendChild(input);
+			var button = element.parentElement.getElementsByClassName('loggbutton')[0];
+				button.setAttribute('value', 'Spara');
+				button.setAttribute('onclick', 'sparasegment(this);');
+		};
+		function sparasegment(element){
+			console.log(element);
+		};
+		/*
 		function addwrapperelemlogg(loggdata){
-
 			var loggwrapper = document.getElementById('loggwrapper');
 			var datumsplit = loggdata.in.datum.split('-');
 			var artext = 'loggar' + numbertotext(datumsplit[0]);
@@ -395,13 +506,22 @@
 			if(!manad){
 				var manadelem = document.createElement('table');
 					manadelem.setAttribute('id', artext + manadtext);
+					manadelem.setAttribute('class', artext + manadtext + dagtext);
 					var trhead = document.createElement('tr');
 						var tdhead = document.createElement('td');
-							tdhead.setAttribute('colspan', '3');
-							var tdheadtext = document.createTextNode(manadtotext(parseInt(datumsplit[1])));
+							tdhead.setAttribute('colspan', config.forklaringar.length);
+							var tdheadtext = document.createTextNode(datumsplit[0] + ' ' + manadtotext(parseInt(datumsplit[1])));
 							tdhead.appendChild(tdheadtext);
 						trhead.appendChild(tdhead);
 					manadelem.appendChild(trhead);
+					var trforklar = document.createElement('tr');
+						for (var i = 0; i < config.forklaringar.length; i++){
+							var tdforklar = document.createElement('td');
+								var forklartext = document.createTextNode(config.forklaringar[i]);
+								tdforklar.appendChild(forklartext);
+							trforklar.appendChild(tdforklar);
+						};
+					manadelem.appendChild(trforklar);
 				document.getElementById(artext).appendChild(manadelem);
 			};
 
@@ -409,19 +529,35 @@
 			if(!dag){
 				var dagelem = document.createElement('tr');
 					dagelem.setAttribute('id', artext + manadtext + dagtext);
+					dagelem.setAttribute('class', artext + manadtext + dagtext);
+					if(!loggdata.ut){
+						dagelem.setAttribute('data-milisec', '0');
+					}else{
+						dagelem.setAttribute('data-milisec', parseInt(loggdata.ut.milisec) - parseInt(loggdata.in.milisec));
+					};
 					var datum = document.createElement('td');
 						datum.setAttribute('rowspan', '1');
 						var datumtext = document.createTextNode(loggdata.in.datum);
 						datum.appendChild(datumtext);
 					dagelem.appendChild(datum);
-					addinfologg(dagelem, loggdata)
+					addinfologg(dagelem, loggdata);
+					var samdag = document.createElement('td');
+						samdag.setAttribute('class', 'samdag');
+					dagelem.appendChild(samdag);
 				document.getElementById(artext + manadtext).appendChild(dagelem);
 			}else{
 				var datumelem = dag.getElementsByTagName('td')[0];
-					datumelem.setAttribute('rowspan', parseInt(datumelem.getAttribute('rowspan')) + 1);
+				var rowspan = parseInt(datumelem.getAttribute('rowspan')) + 1;
+					datumelem.setAttribute('rowspan', rowspan);
+				var samdag = dag.getElementsByClassName('samdag')[0];
+					samdag.setAttribute('rowspan', rowspan);
 				var dagelem = document.createElement('tr');
+					dagelem.setAttribute('class', artext + manadtext + dagtext);
+					dagelem.setAttribute('data-milisec', parseInt(loggdata.ut.milisec) - parseInt(loggdata.in.milisec));
 					addinfologg(dagelem, loggdata);
-				dag.parentNode.insertBefore(dagelem, dag.nextSibling);
+				var allrows = document.getElementsByClassName(artext + manadtext + dagtext)
+				console.log(allrows[0]);
+				allrows[0].insertBefore(dagelem, allrows[allrows.length - 1].nextSibling);
 			};
 		};
 
@@ -431,7 +567,10 @@
 				tidin.appendChild(tidintext);
 			elem.appendChild(tidin);
 			var tidut = document.createElement('td');
-			if(!loggdata.ut){}else{
+			if(!loggdata.ut){
+				var tiduttext = document.createTextNode('XX:XX');
+				tidut.appendChild(tiduttext);
+			}else{
 				var tiduttext = document.createTextNode(loggdata.ut.tid);
 				tidut.appendChild(tiduttext);
 			};
@@ -444,6 +583,43 @@
 			};
 			elem.appendChild(tidmellan);
 		};
+
+		function countday(projektid){
+			var wrapper = document.getElementById('loggwrapper');
+			var alltables = wrapper.getElementsByTagName('table');
+			for (var b = alltables.length - 1; b >= 0; b--) {
+				var alllines = alltables[b].getElementsByTagName('tr');
+				console.log(alllines);
+				var samanlagtmanad = 0;
+				for (var i = alllines.length - 1; i >= 0; i--) {
+					if(!alllines[i].getAttribute('id')){}else{
+						var allelementsday = document.getElementsByClassName(alllines[i].getAttribute('id'));
+						var count = 0;
+						for (var a = allelementsday.length - 1; a >= 0; a--) {
+							if(!allelementsday[a].getAttribute('data-milisec')){}else{
+								var count = count + parseInt(allelementsday[a].getAttribute('data-milisec'));
+							};
+						};
+						console.log(count);
+						var samanlagtmanad = samanlagtmanad + count;
+						var tidraknat = timebetween('', '', count);
+						var samdagtext = document.createTextNode(addzero(tidraknat.t) + ':' + addzero(tidraknat.m) + ':' + addzero(tidraknat.s));
+						alllines[i].getElementsByClassName('samdag')[0].appendChild(samdagtext);
+					};
+				};
+				var sammanmanval = timebetween('', '', samanlagtmanad);
+				var sammanlagtmanadelem = document.createElement('td');
+					sammanlagtmanadelem.setAttribute('rowspan', alllines.length - 2);
+					var sammanlagtmanadtext = document.createTextNode(addzero(sammanmanval.t) + ':' + addzero(sammanmanval.m) + ':' + addzero(sammanmanval.s));
+					sammanlagtmanadelem.appendChild(sammanlagtmanadtext);
+				alllines[2].appendChild(sammanlagtmanadelem);
+				var tdprojekt = document.createElement('td');
+					tdprojekt.setAttribute('rowspan', alllines.length - 2);
+					var tdprojekttext = document.createTextNode(config.projekt[projektid].namn);
+					tdprojekt.appendChild(tdprojekttext);
+				alllines[2].insertBefore(tdprojekt, alllines[2].childNodes[0]); 
+			};
+		};*/
 	</script>
 </body>
 </html>

@@ -94,6 +94,13 @@ function makefile(file){
 	});
 };
 
+function makedirektory(projekt, vgrid){
+	makeDir('users/' + vgrid).then(path => {
+		makeDir('users/' + vgrid + '/' + projekt).then(path => {
+			console.log(projekt + ' förberedd för VGR ID: ' + vgrid);
+		});
+	});
+};
 
 
 // Loading socket.io
@@ -114,12 +121,15 @@ io.sockets.on('connection', function (socket, username) {
 		if(!finns){
 			socket.emit('erroranvandare', 'Användare kunde inte hittas: ' + vgrid);
 		}else{
+			for (var i = finns.projekt.length - 1; i >= 0; i--) {
+				makedirektory(finns.projekt[i], finns.vgrid);
+			};
 			socket.emit('anvandare', finns);
 		};
 	});
 	socket.on('checkprojekt', function (askdata) {
 		console.log(askdata);
-		makeDir('users/' + askdata.vgrid).then(path => {
+		/*makeDir('users/' + askdata.vgrid).then(path => {
 		    console.log('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
 		    makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
 			fs.readFile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json', (err, data) => {
@@ -141,19 +151,66 @@ io.sockets.on('connection', function (socket, username) {
 					};
 				};
 			});
+		});*/
+		//makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + )
+		
+		var gammaldata = [];
+		fs.readdir('users/' + askdata.vgrid + '/' + askdata.projekt, function(err, items) {
+			if(items.length == 0){
+				askdata.svar = 'none';
+				if(askdata.checkaktiv){
+					socket.emit('svarprojekt', askdata);
+				}else if(askdata.getall){
+					socket.emit('sendlogg', askdata);
+				};
+			}else{
+				if(askdata.checkaktiv){
+					for (var i=0; i<items.length; i++) {
+						gammaldata.push(JSON.parse(fs.readFileSync('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + items[i], 'utf8')));
+					};
+					askdata.svar = 'none';
+					for (var i = gammaldata.length - 1; i >= 0; i--) {
+						for (var a = gammaldata[i].data.length - 1; a >= 0; a--) {
+							console.log(gammaldata[i].data[a]);
+							if(!gammaldata[i].data[a].ut){
+								askdata.svar = gammaldata[i].data[a].in;
+							};
+						};
+					};
+					socket.emit('svarprojekt', askdata);
+				}else if(askdata.getall){
+					var splitdatum = askdata.datum.split('-');
+					askdata.svar = JSON.parse(fs.readFileSync('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + splitdatum[0] + '-' + splitdatum[1] + '.json', 'utf8'));
+					var prittydates = [];
+					for (var i = 0; i < items.length; i++){
+						prittydates.push(items[i].split('.js')[0]);
+					};
+					askdata.mothtoload = prittydates;
+					socket.emit('sendlogg', askdata);
+				};
+			}
 		});
 	});
 	socket.on('klockain', function (inklockdata) {
-		var file = 'users/' + inklockdata.vgrid + '/' + inklockdata.projekt + '.json';
+		var indatumdata = {};
+			indatumdata.in = inklockdata.datum;
+		console.log(inklockdata.datum.datum);
+		var datsplit = inklockdata.datum.datum.split('-');
+		var file = 'users/' + inklockdata.vgrid + '/' + inklockdata.projekt + '/' + datsplit[0] + '-' + datsplit[1] + '.json';
 		fs.readFile(file, (err, data) => {
 			if (err){
-				console.log(file + ' kunde inte läsas.');
+				console.log(file + ' kunde inte läsas, skapar ny.');
+				var nydata = {};
+					nydata.data = [indatumdata];
+				fs.writeFile(file, JSON.stringify(nydata, null, ' '), (err) => {
+					socket.emit('startaklocka', inklockdata);
+				});
 			}else{
 				var gammaldata = JSON.parse(data);
 				if(inklockdata.save){
 					socket.emit('startaklocka', inklockdata);
 				}else{
-					gammaldata.data.push({"in": inklockdata.datum});
+					gammaldata.data.push(indatumdata);
 					fs.writeFile(file, JSON.stringify(gammaldata, null, ' '), (err) => {
 						if (err){
 							console.log('Något gick fel i skapandet av ny fil.')
@@ -168,7 +225,9 @@ io.sockets.on('connection', function (socket, username) {
 	});
 
 	socket.on('stopklocka', function(utklockdata) {
-		var file = 'users/' + utklockdata.vgrid + '/' + utklockdata.projekt + '.json';
+		var datsplit = utklockdata.startdatum.split('-');
+		console.log(datsplit);
+		var file = 'users/' + utklockdata.vgrid + '/' + utklockdata.projekt + '/' + datsplit[0] + '-' + datsplit[1] + '.json';
 		fs.readFile(file, (err, data) => {
 			if (err){
 				console.log(file + ' kunde inte läsas.');

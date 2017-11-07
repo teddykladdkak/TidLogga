@@ -30,5 +30,7 @@ var config = {
 		sam: {
 			namn: 'Sammordning'
 		}
-	}
+	},
+	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Månad'],
+	manader: ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December']
 };
