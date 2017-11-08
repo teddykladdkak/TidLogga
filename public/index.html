@@ -11,6 +11,9 @@
 	<script type="application/javascript" src="config.js"></script>
 	<script type="text/javascript">
 		function load(){
+			var logininput = document.getElementById('idnamn');
+				logininput.focus();
+				logininput.select();
 			for (var i = 0; i < config.elemtohide.length; i++){
 				document.getElementById(config.elemtohide[i]).setAttribute('style', 'display: none;');
 			};
@@ -159,6 +162,14 @@
 			};
 			return sortedarray;
 		};
+		function checkkey(e, id, focus){
+			if (event.which == 13 || event.keyCode == 13) {
+				document.getElementById(id).click();
+				var selectelem = document.getElementById(focus);
+					selectelem.focus();
+					selectelem.select();
+			};
+		};
 	</script>
 	<style type="text/css">
 		#header {
@@ -222,8 +233,8 @@
 		</div>
 	</div>
 	<div id="login">
-		<input type="text" id="idnamn" placeholder="VGR ID"><span id="namnstatus"></span><br/>
-		<input type="button" value="Logga In" onclick="loggain();">
+		<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
+		<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">
 	</div>
 	<div id="projekt">
 		<select id="listaprojekt">
@@ -447,46 +458,58 @@
 		});
 		function addlogglist(loggdata, tableelem, projektid, vgrid){
 			var line = document.createElement('tr');
+				line.setAttribute('data-vgrid', vgrid);
+				line.setAttribute('data-projektid', projektid);
+				line.setAttribute('data-milisecin', loggdata.in.milisec);
+			if(!loggdata.ut){
+				line.setAttribute('data-milisecut', 'none');
+			}else{
+				line.setAttribute('data-milisecut', loggdata.ut.milisec);
+			};
 				var tddatum = document.createElement('td');
-					tddatum.setAttribute('onclick', 'makeinput(this, "date");');
 					var tddatumtext = document.createTextNode(loggdata.in.datum);
 					tddatum.appendChild(tddatumtext);
 				line.appendChild(tddatum);
 				var intid = document.createElement('td');
-					intid.setAttribute('onclick', 'makeinput(this, "time");');
 					var intidtext = document.createTextNode(loggdata.in.tid);
 					intid.appendChild(intidtext);
 				line.appendChild(intid);
 				var uttid = document.createElement('td');
-					uttid.setAttribute('onclick', 'makeinput(this, "time");');
 				if(!loggdata.ut){}else{
 					var uttidtext = document.createTextNode(loggdata.ut.tid);
 					uttid.appendChild(uttidtext);
 				};
 				line.appendChild(uttid);
+				var totaltid = document.createElement('td');
+				if(!loggdata.ut){}else{
+					var time = timebetween(loggdata.in.milisec, loggdata.ut.milisec, '');
+					var totaltidtext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+					totaltid.appendChild(totaltidtext);
+				};
+				line.appendChild(totaltid);
 				var remove = document.createElement('td');
-					var removeinput = document.createElement('input');
-						removeinput.setAttribute('type', 'button');
+					var removeinput = document.createElement('img');
+						removeinput.setAttribute('src', 'img/trash.png');
 						removeinput.setAttribute('value', 'Ta bort');
 						removeinput.setAttribute('class', 'loggbutton');
-						removeinput.setAttribute('data-vgrid', vgrid);
-						removeinput.setAttribute('data-projektid', projektid);
-						removeinput.setAttribute('data-milisecin', loggdata.in.milisec);
-					if(!loggdata.ut){
-						removeinput.setAttribute('data-milisecut', 'none');
-					}else{
-						removeinput.setAttribute('data-milisecut', loggdata.ut.milisec);
-					};
 						removeinput.setAttribute('onclick', 'removesegment(this);');
 					remove.appendChild(removeinput);
+					if(!loggdata.ut){}else{
+						var editinput = document.createElement('img');
+							editinput.setAttribute('src', 'img/edit.png');
+							editinput.setAttribute('value', 'Edit');
+							editinput.setAttribute('class', 'loggbutton');
+							editinput.setAttribute('onclick', 'edit(this);');
+						remove.appendChild(editinput);
+					};
 				line.appendChild(remove);
 			tableelem.appendChild(line);
 		};
 		function removesegment(element){
-			var millisecin = element.getAttribute('data-milisecin');
-			var millisecut = element.getAttribute('data-milisecut');
-			var vgrid = element.getAttribute('data-vgrid');
-			var projektid = element.getAttribute('data-projektid');
+			var millisecin = element.parentElement.parentElement.getAttribute('data-milisecin');
+			var millisecut = element.parentElement.parentElement.getAttribute('data-milisecut');
+			var vgrid = element.parentElement.parentElement.getAttribute('data-vgrid');
+			var projektid = element.parentElement.parentElement.getAttribute('data-projektid');
 			var datum = getDate('', '', millisecin).datum;
 			socket.emit('removesegment', {"millisecin": millisecin, "millisecut": millisecut, "vgrid": vgrid, "projektid": projektid, "datum": datum});
 			var loggwrapper = document.getElementById('loggwrapper');
@@ -495,17 +518,6 @@
 		socket.on('elementremoved', function(loggdata) {
 			getlogg(loggdata.datum);
 		});
-		function makeinput(element, typ){
-			var val = element.innerText;
-			removechilds(element);
-			var input = document.createElement('input');
-				input.setAttribute('type', typ);
-				input.setAttribute('value', val);
-			element.appendChild(input);
-			var button = element.parentElement.getElementsByClassName('loggbutton')[0];
-				button.setAttribute('value', 'Spara');
-				button.setAttribute('onclick', 'sparasegment(this);');
-		};
 		function sparasegment(element){
 			console.log(element);
 		};
