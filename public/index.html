@@ -393,13 +393,17 @@
 			disablebuttons('ut');
 		});
 
-		function getlogg(){
+		function getlogg(specielltdatum){
 			var select = document.getElementById('listaprojekt');
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			if(select.value == 'none'){}else{
 				var loggwrapper = document.getElementById('loggwrapper');
 				removechilds(loggwrapper);
-				var datum = getDate().datum;
+				if(!specielltdatum){
+					var datum = getDate().datum;
+				}else{
+					var datum = specielltdatum;
+				};
 				socket.emit('checkprojekt', {"projekt": select.value, "datum": datum, "vgrid": vgrid, "getall": true, "checkaktiv": false});
 			};
 			/*
@@ -410,13 +414,16 @@
 			removechilds(loggwrapper);
 			*/
 		};
-		
+		function loggandramanad(element){
+			getlogg(element.value);
+		};
 		socket.on('sendlogg', function(loggdata) {
 			var loggwrapper = document.getElementById('loggwrapper');
 			var month = document.createElement('select');
+				month.setAttribute('onchange', 'loggandramanad(this);');
 			for (var a = 0; a < loggdata.mothtoload.length; a++){
 				var option = document.createElement('option');
-					option.setAttribute('value', loggdata.mothtoload);
+					option.setAttribute('value', loggdata.mothtoload[a]);
 					var optiontext = document.createTextNode(loggdata.mothtoload[a]);
 					option.appendChild(optiontext);
 				month.appendChild(option);
@@ -428,7 +435,7 @@
 			var tableelem = document.createElement('table');
 			console.log(loggdata.svar.data);
 			for (var i = 0; i < loggsorted.length; i++){
-				addlogglist(loggsorted[i], tableelem);
+				addlogglist(loggsorted[i], tableelem, loggdata.projekt, loggdata.vgrid);
 			};
 			loggwrapper.appendChild(tableelem);
 			/*console.log(loggdata);
@@ -438,7 +445,7 @@
 			};
 			countday(loggdata.projekt);*/
 		});
-		function addlogglist(loggdata, tableelem){
+		function addlogglist(loggdata, tableelem, projektid, vgrid){
 			var line = document.createElement('tr');
 				var tddatum = document.createElement('td');
 					tddatum.setAttribute('onclick', 'makeinput(this, "date");');
@@ -462,8 +469,12 @@
 						removeinput.setAttribute('type', 'button');
 						removeinput.setAttribute('value', 'Ta bort');
 						removeinput.setAttribute('class', 'loggbutton');
+						removeinput.setAttribute('data-vgrid', vgrid);
+						removeinput.setAttribute('data-projektid', projektid);
 						removeinput.setAttribute('data-milisecin', loggdata.in.milisec);
-					if(!loggdata.ut){}else{
+					if(!loggdata.ut){
+						removeinput.setAttribute('data-milisecut', 'none');
+					}else{
 						removeinput.setAttribute('data-milisecut', loggdata.ut.milisec);
 					};
 						removeinput.setAttribute('onclick', 'removesegment(this);');
@@ -472,8 +483,18 @@
 			tableelem.appendChild(line);
 		};
 		function removesegment(element){
-			console.log(element);
+			var millisecin = element.getAttribute('data-milisecin');
+			var millisecut = element.getAttribute('data-milisecut');
+			var vgrid = element.getAttribute('data-vgrid');
+			var projektid = element.getAttribute('data-projektid');
+			var datum = getDate('', '', millisecin).datum;
+			socket.emit('removesegment', {"millisecin": millisecin, "millisecut": millisecut, "vgrid": vgrid, "projektid": projektid, "datum": datum});
+			var loggwrapper = document.getElementById('loggwrapper');
+				removechilds(loggwrapper);
 		};
+		socket.on('elementremoved', function(loggdata) {
+			getlogg(loggdata.datum);
+		});
 		function makeinput(element, typ){
 			var val = element.innerText;
 			removechilds(element);

@@ -191,6 +191,35 @@ io.sockets.on('connection', function (socket, username) {
 			}
 		});
 	});
+	socket.on('removesegment', function (removedata) {
+		var splitdatum = removedata.datum.split('-');
+		var file = 'users/' + removedata.vgrid + '/' + removedata.projektid + '/' + splitdatum[0] + '-' + splitdatum[1] + '.json';
+		var readdata = JSON.parse(fs.readFileSync(file, 'utf8'));
+		var elementtoremove = findelement(readdata, removedata.millisecin, removedata.millisecut);
+			readdata.data.splice(elementtoremove,1);
+		fs.writeFile(file, JSON.stringify(readdata, null, ' '), (err) => {
+			socket.emit('elementremoved', removedata);
+		});
+	});
+	function findelement(data, millisecin, millisecut){
+		var olddata = data.data;
+		for (var i = olddata.length - 1; i >= 0; i--) {
+			if(millisecut == 'none'){
+				if(olddata[i].in.milisec == millisecin){
+					if(!olddata[i].ut){
+						return i;
+					};
+				};
+			}else{
+				if(olddata[i].in.milisec == millisecin){
+					if(olddata[i].ut.milisec == millisecut){
+						return i;
+					};
+				};
+			};
+		};
+		return 'none';
+	};
 	socket.on('klockain', function (inklockdata) {
 		var indatumdata = {};
 			indatumdata.in = inklockdata.datum;
