@@ -128,32 +128,6 @@ io.sockets.on('connection', function (socket, username) {
 		};
 	});
 	socket.on('checkprojekt', function (askdata) {
-		console.log(askdata);
-		/*makeDir('users/' + askdata.vgrid).then(path => {
-		    console.log('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
-		    makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json');
-			fs.readFile('users/' + askdata.vgrid + '/' + askdata.projekt + '.json', (err, data) => {
-				if (err){
-					console.log('Kunde inte läsa "users/' + askdata.vgrid + '/' + askdata.projekt + '.json".');
-				}else{
-					var gammaldata = JSON.parse(data);
-					if(askdata.getall){
-						askdata.svar = gammaldata.data
-						socket.emit('sendlogg', askdata);
-					}else{
-						askdata.svar = 'none';
-						for (var i = gammaldata.data.length - 1; i >= 0; i--) {
-							if(!gammaldata.data[i].ut){
-								askdata.svar = gammaldata.data[i].in;
-							};
-						};
-						socket.emit('svarprojekt', askdata);
-					};
-				};
-			});
-		});*/
-		//makefile('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + )
-		
 		var gammaldata = [];
 		fs.readdir('users/' + askdata.vgrid + '/' + askdata.projekt, function(err, items) {
 			if(items.length == 0){
@@ -198,7 +172,40 @@ io.sockets.on('connection', function (socket, username) {
 		var elementtoremove = findelement(readdata, removedata.millisecin, removedata.millisecut);
 			readdata.data.splice(elementtoremove,1);
 		fs.writeFile(file, JSON.stringify(readdata, null, ' '), (err) => {
-			socket.emit('elementremoved', removedata);
+			socket.emit('reloadlogg', removedata);
+		});
+	});
+	socket.on('editsegment', function (editdata) {
+		var oldsplitdatum = editdata.old.datum.split('-');
+		var oldfile = 'users/' + editdata.vgrid + '/' + editdata.projektid + '/' + oldsplitdatum[0] + '-' + oldsplitdatum[1] + '.json';
+		console.log(oldfile);
+		var readdata = JSON.parse(fs.readFileSync(oldfile, 'utf8'));
+		var elementtoremove = findelement(readdata, editdata.old.millisecin, editdata.old.millisecut);
+			readdata.data.splice(elementtoremove,1);
+		fs.writeFile(oldfile, JSON.stringify(readdata, null, ' '), (err) => {
+			var nysplitdatum = editdata.ny.in.datum.split('-');
+			var nyfile = 'users/' + editdata.vgrid + '/' + editdata.projektid + '/' + nysplitdatum[0] + '-' + nysplitdatum[1] + '.json';
+			fs.readFile(nyfile, (err, data) => {
+				if (err){
+					console.log(nyfile + ' kunde inte läsas, skapar ny.');
+					var nydata = {};
+						nydata.data = [editdata.ny];
+					fs.writeFile(nyfile, JSON.stringify(nydata, null, ' '), (err) => {
+						socket.emit('reloadlogg', editdata);
+					});
+				}else{
+					var gammaldata = JSON.parse(data);
+						gammaldata.data.push(editdata.ny);
+					fs.writeFile(nyfile, JSON.stringify(gammaldata, null, ' '), (err) => {
+						if (err){
+							console.log('Något gick fel i skapandet av ny fil.')
+						}else{
+							console.log('"' + nyfile + '" ändrad.');
+							socket.emit('reloadlogg', editdata);
+						};
+					});
+				};
+			});
 		});
 	});
 	function findelement(data, millisecin, millisecut){
@@ -277,6 +284,34 @@ io.sockets.on('connection', function (socket, username) {
 				});
 			};
 		});
+	});
+
+
+	socket.on('getfilestoload', function(vgrid) {
+		fs.readdir('users/' + vgrid, function(err, projekt) {
+			var responsdata = [];
+			for (var i = projekt.length - 1; i >= 0; i--) {
+				if(projekt[i].split('.').length == 1){
+					responsdata.push(projekt[i]);
+				};
+			};
+			socket.emit('responsfilestoload', {"responsdata": responsdata, "vgrid": vgrid});
+		});
+	});
+	socket.on('getdates', function(data) {
+		//{"vgrid": vgrid, "responsdata": responsdata}
+		for (var i = data.responsdata.length - 1; i >= 0; i--) {
+			fs.readdir('users/' + data.vgrid + '/' + data.responsdata[i], function(err, datum) {
+				var responsdatum = [];
+				for (var i = datum.length - 1; i >= 0; i--) {
+					var datumsplit = datum[i].split('.');
+					if(datumsplit[1] == 'json'){
+						responsdatum.push(datumsplit[0]);
+					};
+				};
+				socket.emit('skrivutadddatum', responsdatum);
+			});
+		};
 	});
 });
 //Kollar IP adress för server.

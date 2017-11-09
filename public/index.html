@@ -167,8 +167,11 @@
 				document.getElementById(id).click();
 				var selectelem = document.getElementById(focus);
 					selectelem.focus();
-					selectelem.select();
 			};
+		};
+		function addbrake(parent){
+			var brake = document.createElement('br');
+			parent.appendChild(brake);
 		};
 	</script>
 	<style type="text/css">
@@ -192,11 +195,11 @@
 		.td{
 			display: table-cell;
 		}
-		input, select, #klockadata {
+		input, select, #klockadata, p {
 			zoom: 1.5;
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid, #loggwrapper{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut{
 			border: solid #000 3px;
 		}
 		#namn {
@@ -240,7 +243,7 @@
 		<select id="listaprojekt">
 			<option value="none">Välj Projekt</option>
 		</select><br/>
-		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut">
+		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut" onclick="loadskrivut();">
 	</div>
 	<div id="klocka">
 		<div id="klockadata">
@@ -265,9 +268,18 @@
 	<div id="loggwrapper">
 		
 	</div>
-
-
-
+	<div id="loggedit">
+		<p>In stämpling</p>
+		<input type="date" id="loggeditindat"><br/>
+		<input type="time" id="loggeditintime">
+		<p>Ut stämpling</p>
+		<input type="date" id="loggeditutdat"><br/>
+		<input type="time" id="loggedituttime"><br/>
+		<input type="button" value="Spara" onclick="sendedit();"><input type="button" value="Avbryt" onclick="avbrytedit();">
+	</div>
+	<div id="skrivut">
+			
+	</div>
 	<script src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript">
 		//Tar server id enbart för att koppla till socket
@@ -321,7 +333,7 @@
 		socket.on('svarprojekt', function(responsdata) {
 			console.log(responsdata);
 			var tidraknare = document.getElementById('tid');
-					tidraknare.setAttribute('data-projektid', responsdata.projekt);
+				tidraknare.setAttribute('data-projektid', responsdata.projekt);
 				var projektnamn = document.getElementById('projektnamn');
 					removechilds(projektnamn);
 					var projektnamntext = document.createTextNode(config.projekt[responsdata.projekt].namn);
@@ -405,6 +417,7 @@
 		});
 
 		function getlogg(specielltdatum){
+			avbrytedit();
 			var select = document.getElementById('listaprojekt');
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			if(select.value == 'none'){}else{
@@ -417,45 +430,51 @@
 				};
 				socket.emit('checkprojekt', {"projekt": select.value, "datum": datum, "vgrid": vgrid, "getall": true, "checkaktiv": false});
 			};
-			/*
-			if(select.value == 'none'){}else{
-				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": true});
-			};
-			var loggwrapper = document.getElementById('loggwrapper');
-			removechilds(loggwrapper);
-			*/
 		};
 		function loggandramanad(element){
 			getlogg(element.value);
 		};
 		socket.on('sendlogg', function(loggdata) {
-			var loggwrapper = document.getElementById('loggwrapper');
-			var month = document.createElement('select');
-				month.setAttribute('onchange', 'loggandramanad(this);');
-			for (var a = 0; a < loggdata.mothtoload.length; a++){
-				var option = document.createElement('option');
-					option.setAttribute('value', loggdata.mothtoload[a]);
-					var optiontext = document.createTextNode(loggdata.mothtoload[a]);
-					option.appendChild(optiontext);
-				month.appendChild(option);
+			if(!loggdata.mothtoload){}else{
+				var projektnamn = document.getElementById('projektnamn');
+					removechilds(projektnamn);
+					var projektnamntext = document.createTextNode(config.projekt[loggdata.projekt].namn);
+					projektnamn.appendChild(projektnamntext);
+				showhide('none', 'projektnamn');
+				var loggwrapper = document.getElementById('loggwrapper');
+					var tillbaka = document.createElement('input');
+						tillbaka.setAttribute('type', 'button');
+						tillbaka.setAttribute('value', 'Tillbaka');
+						tillbaka.setAttribute('onclick', 'backfromlogg();');
+					loggwrapper.appendChild(tillbaka);
+				var month = document.createElement('select');
+					month.setAttribute('onchange', 'loggandramanad(this);');
+				for (var a = loggdata.mothtoload.length - 1; a >= 0; a--) {
+					var option = document.createElement('option');
+						option.setAttribute('value', loggdata.mothtoload[a]);
+						var optiontext = document.createTextNode(loggdata.mothtoload[a]);
+						option.appendChild(optiontext);
+					month.appendChild(option);
+				};
+				loggwrapper.appendChild(month);
+				var datumsplit = loggdata.datum.split('-');
+				month.value = datumsplit[0] + '-' + datumsplit[1];
+				var loggsorted = loggsort(loggdata.svar.data);
+				var tableelem = document.createElement('table');
+				console.log(loggdata.svar.data);
+				for (var i = 0; i < loggsorted.length; i++){
+					addlogglist(loggsorted[i], tableelem, loggdata.projekt, loggdata.vgrid);
+				};
+				loggwrapper.appendChild(tableelem);
+				showhide('projekt', 'loggwrapper');
 			};
-			loggwrapper.appendChild(month);
-			var datumsplit = loggdata.datum.split('-');
-			month.value = datumsplit[0] + '-' + datumsplit[1];
-			var loggsorted = loggsort(loggdata.svar.data);
-			var tableelem = document.createElement('table');
-			console.log(loggdata.svar.data);
-			for (var i = 0; i < loggsorted.length; i++){
-				addlogglist(loggsorted[i], tableelem, loggdata.projekt, loggdata.vgrid);
-			};
-			loggwrapper.appendChild(tableelem);
-			/*console.log(loggdata);
-			var loggsorted = loggsort(loggdata.svar);
-			for (var i = 0; i < loggsorted.length; i++){
-				addwrapperelemlogg(loggsorted[i]);	
-			};
-			countday(loggdata.projekt);*/
 		});
+		function backfromlogg(){
+			var projektnamn = document.getElementById('projektnamn');
+				removechilds(projektnamn);
+			showhide('projektnamn', 'none');
+			showhide("loggwrapper", "projekt");
+		};
 		function addlogglist(loggdata, tableelem, projektid, vgrid){
 			var line = document.createElement('tr');
 				line.setAttribute('data-vgrid', vgrid);
@@ -499,7 +518,7 @@
 							editinput.setAttribute('src', 'img/edit.png');
 							editinput.setAttribute('value', 'Edit');
 							editinput.setAttribute('class', 'loggbutton');
-							editinput.setAttribute('onclick', 'edit(this);');
+							editinput.setAttribute('onclick', 'showedit(this);');
 						remove.appendChild(editinput);
 					};
 				line.appendChild(remove);
@@ -515,12 +534,138 @@
 			var loggwrapper = document.getElementById('loggwrapper');
 				removechilds(loggwrapper);
 		};
-		socket.on('elementremoved', function(loggdata) {
+		socket.on('reloadlogg', function(loggdata) {
+			showhide('loggedit', 'loggwrapper');
+			showhide('projekt', 'loggwrapper');
 			getlogg(loggdata.datum);
 		});
-		function sparasegment(element){
+		function showedit(element){
 			console.log(element);
+			var wrapper = document.getElementById('loggedit');
+			var datatofetch = ['milisecin', 'milisecut', 'vgrid', 'projektid'];
+			var datatopaste = {};
+			for (var i = datatofetch.length - 1; i >= 0; i--) {
+				var getdata = element.parentElement.parentElement.getAttribute('data-' + datatofetch[i]);
+				datatopaste[datatofetch[i]] = getdata;
+				wrapper.setAttribute('data-' + datatofetch[i], getdata);
+			};
+			var tidin = getDate('', '', datatopaste.milisecin);
+			var tidut = getDate('', '', datatopaste.milisecut);
+			console.log(tidin);
+			console.log(tidut);
+			document.getElementById('loggeditindat').value = tidin.datum;
+			document.getElementById('loggeditintime').value = tidin.tid;
+			document.getElementById('loggeditutdat').value = tidut.datum;
+			document.getElementById('loggedituttime').value = tidut.tid;
+			showhide('loggwrapper', 'loggedit');
 		};
+		function sendedit(){
+			var loggeditindat = document.getElementById('loggeditindat').value;
+			var loggeditintime = document.getElementById('loggeditintime').value;
+			var tidin = getDate(loggeditindat, loggeditintime, '');
+			var loggeditutdat = document.getElementById('loggeditutdat').value;
+			var loggedituttime = document.getElementById('loggedituttime').value;
+			var tidut = getDate(loggeditutdat, loggedituttime, '');
+			console.log(tidin.milisec + '-' + tidut.milisec);
+			if(tidin.milisec <= tidut.milisec){
+				var wrapper = document.getElementById('loggedit');
+				var arraytosave = {};
+					arraytosave.vgrid = wrapper.getAttribute('data-vgrid');
+					arraytosave.projektid = wrapper.getAttribute('data-projektid');
+					arraytosave.old = {};
+					arraytosave.old.millisecin = wrapper.getAttribute('data-milisecin');
+					arraytosave.old.millisecut = wrapper.getAttribute('data-milisecut');
+					var olddatumarray = getDate('', '', wrapper.getAttribute('data-milisecin'));
+					arraytosave.old.datum = olddatumarray.datum;
+					arraytosave.ny = {};
+					arraytosave.ny.in = tidin;
+					arraytosave.ny.ut = tidut;
+				console.log(arraytosave);
+				socket.emit('editsegment', arraytosave);
+			}else{
+				console.log('Tid är negativ!');
+			};
+		};
+		function avbrytedit(){
+			var datatoremove = ['milisecin', 'milisecut', 'vgrid', 'projektid'];
+			var wrapper = document.getElementById('loggedit');
+			for (var i = datatoremove.length - 1; i >= 0; i--) {
+				wrapper.removeAttribute('data-' + datatoremove[i]);
+			};
+			document.getElementById('loggeditindat').value = '';
+			document.getElementById('loggeditintime').value = '';
+			document.getElementById('loggeditutdat').value = '';
+			document.getElementById('loggedituttime').value = '';
+		};
+
+		function loadskrivut(){
+			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
+			var skrivutwrapper = document.getElementById('skrivut');
+			removechilds(skrivutwrapper);
+			socket.emit('getfilestoload', vgrid);
+		};
+		socket.on('responsfilestoload', function(data) {
+			console.log(data.responsdata);
+			var skrivutwrapper = document.getElementById('skrivut');
+				var tillbaka = document.createElement('input');
+					tillbaka.setAttribute('type', 'button');
+					tillbaka.setAttribute('value', 'Tillbaka');
+					tillbaka.setAttribute('onclick', 'showhide("skrivut", "projekt");');
+				skrivutwrapper.appendChild(tillbaka);
+				addbrake(skrivutwrapper);
+			for (var a = data.responsdata.length - 1; a >= 0; a--) {
+				var input = document.createElement('input');
+					input.setAttribute('type', 'checkbox');
+					input.setAttribute('data-namn', data.responsdata[a]);
+					input.checked = true;
+				skrivutwrapper.appendChild(input);
+				var lable = document.createElement('lable');
+					var labletext = document.createTextNode(config.projekt[data.responsdata[a]].namn);
+					lable.appendChild(labletext);
+				skrivutwrapper.appendChild(lable);
+			};
+				addbrake(skrivutwrapper);
+				var select = document.createElement('select');
+					select.setAttribute('id', 'skrivutdatum');
+				skrivutwrapper.appendChild(select);
+				var skapa = document.createElement('input');
+					skapa.setAttribute('type', 'button');
+					skapa.setAttribute('value', 'Skriv ut');
+				skrivutwrapper.appendChild(skapa);
+			socket.emit('getdates', {"vgrid": data.vgrid, "responsdata": data.responsdata});
+			showhide('projekt', 'skrivut');
+		});
+		socket.on('skrivutadddatum', function(datum) {
+			console.log(datum);
+			var wrapper = document.getElementById('skrivutdatum');
+			var newoptions = [];
+			var alloptions = wrapper.getElementsByTagName('option');
+			for (var a = alloptions.length - 1; a >= 0; a--) {
+				newoptions.push(alloptions[a].getAttribute('value'));
+			};
+			console.log(newoptions);
+			removechilds(wrapper);
+			for (var i = datum.length - 1; i >= 0; i--) {
+				var nyval = true;
+				for (var a = newoptions.length - 1; a >= 0; a--) {
+					if(newoptions[a] == datum[i]){
+						var nyval = false;
+					};
+				};
+				if(nyval){
+					newoptions.push(datum[i]);
+				};
+			};
+			console.log(newoptions);
+			newoptions.sort();
+			for (var i = newoptions.length - 1; i >= 0; i--) {
+				var option = document.createElement('option');
+					option.setAttribute('value', newoptions[i]);
+					var optiontext = document.createTextNode(newoptions[i]);
+					option.appendChild(optiontext);
+				wrapper.appendChild(option);
+			};
+		});
 		/*
 		function addwrapperelemlogg(loggdata){
 			var loggwrapper = document.getElementById('loggwrapper');
