@@ -81,13 +81,12 @@ loadusers();
 function makefile(file){
 	fs.readFile(file, (err, data) => {
 		if (err){
-			console.log('"' + file + '" finns inte, skapar ny fil.');
 			var texttowrite = JSON.parse('{"data": []}');
 			fs.writeFile(file, JSON.stringify(texttowrite, null, ' '), (err) => {
 				if (err){
 					console.log('Något gick fel i skapandet av ny fil.')
 				}else{
-					console.log('"' + file + '" skapad.');
+
 				};
 			});
 		};
@@ -97,7 +96,6 @@ function makefile(file){
 function makedirektory(projekt, vgrid){
 	makeDir('users/' + vgrid).then(path => {
 		makeDir('users/' + vgrid + '/' + projekt).then(path => {
-			console.log(projekt + ' förberedd för VGR ID: ' + vgrid);
 		});
 	});
 };
@@ -111,9 +109,7 @@ io.sockets.on('connection', function (socket, username) {
 	socket.on('checkuser', function (vgrid) {
 		var finns = false;
 		var allusers = global['allusers'];
-		console.log(allusers);
 		for (var i = allusers.length - 1; i >= 0; i--) {
-			console.log(allusers[i].vgrid);
 			if(vgrid == allusers[i].vgrid){
 				var finns = allusers[i];
 			};
@@ -124,6 +120,7 @@ io.sockets.on('connection', function (socket, username) {
 			for (var i = finns.projekt.length - 1; i >= 0; i--) {
 				makedirektory(finns.projekt[i], finns.vgrid);
 			};
+			socket.username = vgrid;
 			socket.emit('anvandare', finns);
 		};
 	});
@@ -145,7 +142,6 @@ io.sockets.on('connection', function (socket, username) {
 					askdata.svar = 'none';
 					for (var i = gammaldata.length - 1; i >= 0; i--) {
 						for (var a = gammaldata[i].data.length - 1; a >= 0; a--) {
-							console.log(gammaldata[i].data[a]);
 							if(!gammaldata[i].data[a].ut){
 								askdata.svar = gammaldata[i].data[a].in;
 							};
@@ -153,8 +149,13 @@ io.sockets.on('connection', function (socket, username) {
 					};
 					socket.emit('svarprojekt', askdata);
 				}else if(askdata.getall){
-					var splitdatum = askdata.datum.split('-');
-					askdata.svar = JSON.parse(fs.readFileSync('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + splitdatum[0] + '-' + splitdatum[1] + '.json', 'utf8'));
+					if(askdata.datum == 'none'){
+						askdata.datum = items[items.length - 1].split('.js')[0];
+					}else{
+						var splitdatum = askdata.datum.split('-');
+						askdata.datum = splitdatum[0] + '-' + splitdatum[1];
+					};
+					askdata.svar = JSON.parse(fs.readFileSync('users/' + askdata.vgrid + '/' + askdata.projekt + '/' + askdata.datum + '.json', 'utf8'));
 					var prittydates = [];
 					for (var i = 0; i < items.length; i++){
 						prittydates.push(items[i].split('.js')[0]);
@@ -178,7 +179,6 @@ io.sockets.on('connection', function (socket, username) {
 	socket.on('editsegment', function (editdata) {
 		var oldsplitdatum = editdata.old.datum.split('-');
 		var oldfile = 'users/' + editdata.vgrid + '/' + editdata.projektid + '/' + oldsplitdatum[0] + '-' + oldsplitdatum[1] + '.json';
-		console.log(oldfile);
 		var readdata = JSON.parse(fs.readFileSync(oldfile, 'utf8'));
 		var elementtoremove = findelement(readdata, editdata.old.millisecin, editdata.old.millisecut);
 			readdata.data.splice(elementtoremove,1);
@@ -187,7 +187,6 @@ io.sockets.on('connection', function (socket, username) {
 			var nyfile = 'users/' + editdata.vgrid + '/' + editdata.projektid + '/' + nysplitdatum[0] + '-' + nysplitdatum[1] + '.json';
 			fs.readFile(nyfile, (err, data) => {
 				if (err){
-					console.log(nyfile + ' kunde inte läsas, skapar ny.');
 					var nydata = {};
 						nydata.data = [editdata.ny];
 					fs.writeFile(nyfile, JSON.stringify(nydata, null, ' '), (err) => {
@@ -200,7 +199,6 @@ io.sockets.on('connection', function (socket, username) {
 						if (err){
 							console.log('Något gick fel i skapandet av ny fil.')
 						}else{
-							console.log('"' + nyfile + '" ändrad.');
 							socket.emit('reloadlogg', editdata);
 						};
 					});
@@ -230,12 +228,10 @@ io.sockets.on('connection', function (socket, username) {
 	socket.on('klockain', function (inklockdata) {
 		var indatumdata = {};
 			indatumdata.in = inklockdata.datum;
-		console.log(inklockdata.datum.datum);
 		var datsplit = inklockdata.datum.datum.split('-');
 		var file = 'users/' + inklockdata.vgrid + '/' + inklockdata.projekt + '/' + datsplit[0] + '-' + datsplit[1] + '.json';
 		fs.readFile(file, (err, data) => {
 			if (err){
-				console.log(file + ' kunde inte läsas, skapar ny.');
 				var nydata = {};
 					nydata.data = [indatumdata];
 				fs.writeFile(file, JSON.stringify(nydata, null, ' '), (err) => {
@@ -251,7 +247,6 @@ io.sockets.on('connection', function (socket, username) {
 						if (err){
 							console.log('Något gick fel i skapandet av ny fil.')
 						}else{
-							console.log('"' + file + '" ändrad.');
 							socket.emit('startaklocka', inklockdata);
 						};
 					});
@@ -262,11 +257,9 @@ io.sockets.on('connection', function (socket, username) {
 
 	socket.on('stopklocka', function(utklockdata) {
 		var datsplit = utklockdata.startdatum.split('-');
-		console.log(datsplit);
 		var file = 'users/' + utklockdata.vgrid + '/' + utklockdata.projekt + '/' + datsplit[0] + '-' + datsplit[1] + '.json';
 		fs.readFile(file, (err, data) => {
 			if (err){
-				console.log(file + ' kunde inte läsas.');
 			}else{
 				var gammaldata = JSON.parse(data);
 				for (var i = gammaldata.data.length - 1; i >= 0; i--) {
@@ -278,7 +271,6 @@ io.sockets.on('connection', function (socket, username) {
 					if (err){
 						console.log('Något gick fel i skapandet av ny fil.')
 					}else{
-						console.log('"' + file + '" ändrad.');
 						socket.emit('stopklocka', utklockdata);
 					};
 				});
@@ -312,6 +304,19 @@ io.sockets.on('connection', function (socket, username) {
 				socket.emit('skrivutadddatum', responsdatum);
 			});
 		};
+	});
+	socket.on('getprojektinformaiton', function(data) {
+		var datatosend = [];
+		for (var i = data.projekttoget.length - 1; i >= 0; i--) {
+			var projekt = data.projekttoget[i];
+			var file = 'users/' + data.vgrid + '/' + projekt + '/' + data.manad + '.json';
+			if (fs.existsSync(file)) {
+				datatosend.push({"id": projekt, "data": JSON.parse(fs.readFileSync(file, 'utf8')).data});
+			}else{
+				datatosend.push({"id": projekt, "data": "none"});
+			};
+		};
+		socket.emit('skrivutinfo', datatosend);
 	});
 });
 //Kollar IP adress för server.

@@ -13,7 +13,7 @@ var config = {
 		infonetw:'Nätverket',
 		infoturnoff: 'Stäng av server med "CTRL+C"'
 	},
-	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut'],
+	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper'],
 	projekt: {
 		dw: {
 			namn: 'Digital Whiteboard'
@@ -31,6 +31,7 @@ var config = {
 			namn: 'Sammordning'
 		}
 	},
-	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Månad'],
-	manader: ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December']
+	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Projekt', 'Tid Månad'],
+	manader: ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'],
+	skrivutfinnsinte: ['XXXXXX', 'XX:XX', 'XX:XX', 'XX:XX:XX', 'XX:XX:XX', 'XX:XX:XX']
 };
