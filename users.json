@@ -2,6 +2,12 @@
  "data": [{
 			"vgrid": "test3",
 			"namn": "Test Testsson",
-			"projekt": ["dw", "mat", "res", "utb", "sam"]
+			"projekt": ["dw", "mat", "res", "utb", "sam"],
+			"admin": false
+		},{
+			"vgrid": "test1",
+			"namn": "Test Testsson",
+			"projekt": ["dw", "mat", "res", "sam"],
+			"admin": true
 		}]
 }

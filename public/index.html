@@ -238,6 +238,9 @@
 		#skrivutpapper table tbody tr.topborder{
 			border-top: solid 3px #000;
 		}
+		#skrivutpapper table td{
+			vertical-align: middle;
+		}
 		/*#skrivutpapper table tbody tr:nth-child(0), #skrivutpapper table tr:nth-child(1){
 			text-align: left;
 		}*/
@@ -264,7 +267,8 @@
 	</div>
 	<div id="login">
 		<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
-		<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">
+		<input type="button" value="Logga In" id="loginbutton" onclick="loggain();"><br/>
+		<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
 	</div>
 	<div id="projekt">
 		<select id="listaprojekt">
@@ -329,6 +333,7 @@
 		};
 
 		socket.on('anvandare', function(responsdata) {
+			console.log(responsdata);
 			document.getElementById('tid').setAttribute('data-vgrid', responsdata.vgrid);
 			var namn = document.getElementById('namn');
 				removechilds(namn);
@@ -342,10 +347,24 @@
 					option.appendChild(optiontext);
 				listaprojekt.appendChild(option);
 			};
+			if(responsdata.admin){
+				var projektwrapper = document.getElementById('projekt');
+					var adminbutton = document.createElement('input');
+						adminbutton.setAttribute('value', 'Admin');
+						adminbutton.setAttribute('type', 'button');
+						adminbutton.setAttribute('onclick', 'admin("' + responsdata.vgrid + '");');
+					projektwrapper.appendChild(adminbutton);
+			};
 			showhide('none', 'namn');
 			showhide('login', 'projekt');
 		});
-
+		function admin(vgrid){
+			socket.emit('startadmin', vgrid);
+		};
+		socket.on('admininfo', function(anvandare) {
+			console.log(anvandare);
+		});
+		
 		socket.on('erroranvandare', function(message) {
 			adderror('namnstatus', 'Användarnamn kunde inte hittas!');
 			console.log('Användarnamn kunde inte hittas!');
@@ -424,7 +443,7 @@
 			};
 			var startmilisec = document.getElementById('tid').getAttribute('data-milisec');
 			if(datum.milisec <= startmilisec){
-				adderror('datumstatus', 'Du kan inte kocka ut innan du klockade in!');
+				adderror('datumstatus', 'Du kan inte klocka ut innan du klockade in!');
 			}else{
 				disablebuttons('ut');
 				disablebuttons('in');
@@ -439,6 +458,12 @@
 		};
 
 		socket.on('stopklocka', function(inklockdata) {
+			var tidwrapper = document.getElementById('tid');
+			var time = timebetween(tidwrapper.getAttribute('data-milisec'), inklockdata.datum.milisec, '');
+				removechilds(tidwrapper);
+				var tidtext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+				tidwrapper.appendChild(tidtext);
+			console.log(time);
 			enablebuttons('in');
 			disablebuttons('ut');
 		});
@@ -654,11 +679,16 @@
 				var select = document.createElement('select');
 					select.setAttribute('id', 'skrivutdatum');
 				skrivutwrapper.appendChild(select);
-				var skapa = document.createElement('input');
-					skapa.setAttribute('type', 'button');
-					skapa.setAttribute('value', 'Skriv ut...');
-					skapa.setAttribute('onclick', 'startprint();');
-				skrivutwrapper.appendChild(skapa);
+				var skrivutknapp = document.createElement('input');
+					skrivutknapp.setAttribute('type', 'button');
+					skrivutknapp.setAttribute('value', 'Skriv ut...');
+					skrivutknapp.setAttribute('onclick', 'startprint("print");');
+				skrivutwrapper.appendChild(skrivutknapp);
+				var excellknapp = document.createElement('input');
+					excellknapp.setAttribute('type', 'button');
+					excellknapp.setAttribute('value', 'Spara Excell');
+					excellknapp.setAttribute('onclick', 'startprint("excell");');
+				skrivutwrapper.appendChild(excellknapp);
 			socket.emit('getdates', {"vgrid": data.vgrid, "responsdata": data.responsdata});
 			showhide('projekt', 'skrivut');
 		});
@@ -691,7 +721,7 @@
 			};
 		});
 		//#skrivutpapper
-		function startprint(){
+		function startprint(todo){
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			var manad = document.getElementById('skrivutdatum').value;
 			var allcheckboxes = document.getElementById('printcheckboxes').getElementsByTagName('input');
@@ -723,27 +753,31 @@
 					var tbody = document.createElement('tbody');
 					table.appendChild(tbody);
 				skrivutpapper.appendChild(table);
-			socket.emit('getprojektinformaiton', {"vgrid": vgrid, "manad": manad, "projekttoget": projekttoget});
+			socket.emit('getprojektinformaiton', {"vgrid": vgrid, "manad": manad, "projekttoget": projekttoget, "todo": todo});
 		};
 		socket.on('skrivutinfo', function(respons) {
-			for (var i = respons.length - 1; i >= 0; i--) {
-				if(respons[i].data == 'none'){
-					addskrivutline(respons[i].id, config.skrivutfinnsinte);
-				}else if(respons[i].data.length == 0){
-					addskrivutline(respons[i].id, config.skrivutfinnsinte);
+			for (var i = respons.data.length - 1; i >= 0; i--) {
+				if(respons.data[i].data == 'none'){
+					addskrivutline(respons.data[i].id, config.skrivutfinnsinte);
+				}else if(respons.data[i].data.length == 0){
+					addskrivutline(respons.data[i].id, config.skrivutfinnsinte);
 				}else{
-					var loggsorted = loggsort(respons[i].data);
+					var loggsorted = loggsort(respons.data[i].data);
 					for (var a = 0; a < loggsorted.length; a++){
 						if(!loggsorted[a].ut){}else{
 							var time = timebetween(loggsorted[a].in.milisec, loggsorted[a].ut.milisec, '');
 							var printarray = [loggsorted[a].in.tid, loggsorted[a].ut.tid, addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s)];
-							addskrivutline(respons[i].id, printarray, loggsorted[a]);
+							addskrivutline(respons.data[i].id, printarray, loggsorted[a]);
 						};
 					};
 				};
 			};
 			countallpassskrivut();
-			window.print();
+			if(respons.todo == 'print'){
+				window.print();
+			}else if(respons.todo == 'excell'){
+				makeexcell(respons.manad);
+			};
 		});
 		function adddagskrivut(element, namn, datum){
 			var dagnummertd = document.createElement('td');
@@ -839,6 +873,17 @@
 					allpasstd.appendChild(allpasstext);
 				firsttr[0].appendChild(allpasstd);
 		};
+		function makeexcell(manad){
+		    var data_type = 'data:application/vnd.ms-excel';
+		    var table_div = document.getElementById('skrivutpapper');
+		    var table_html = table_div.outerHTML.replace(/ /g, '%20');
+
+		    var a = document.getElementById('printlink');
+			    a.setAttribute('href', data_type + ', ' + table_html);
+			    a.setAttribute('download', "Tidrapport " + manad + ".xls");
+			    a.click();
+		};
 	</script>
+	<a href="" id="printlink" style="visibility: hidden;"></a>
 </body>
 </html>

@@ -124,6 +124,22 @@ io.sockets.on('connection', function (socket, username) {
 			socket.emit('anvandare', finns);
 		};
 	});
+	
+	socket.on('startadmin', function (vgrid) {
+		console.log('Admin startar...');
+		var finns = false;
+		var allusers = global['allusers'];
+		for (var i = allusers.length - 1; i >= 0; i--) {
+			if(vgrid == allusers[i].vgrid){
+				var finns = allusers[i].admin;
+			};
+		};
+		console.log(finns);
+		if(!finns){}else{
+			socket.emit('admininfo', allusers);
+		};
+	});
+
 	socket.on('checkprojekt', function (askdata) {
 		var gammaldata = [];
 		fs.readdir('users/' + askdata.vgrid + '/' + askdata.projekt, function(err, items) {
@@ -316,7 +332,7 @@ io.sockets.on('connection', function (socket, username) {
 				datatosend.push({"id": projekt, "data": "none"});
 			};
 		};
-		socket.emit('skrivutinfo', datatosend);
+		socket.emit('skrivutinfo', {"data": datatosend, "todo": data.todo, "manad": data.manad});
 	});
 });
 //Kollar IP adress för server.
