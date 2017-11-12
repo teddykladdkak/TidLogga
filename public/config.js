@@ -4,7 +4,7 @@ var config = {
 		users: './users.json',
 		projekt: './projekt.json'
 	},
-	port: 8888,
+	port: 7788,
 	cmd: {
 		infowidth: 60,
 		infostart: 'Server är startad!',
@@ -13,7 +13,8 @@ var config = {
 		infonetw:'Nätverket',
 		infoturnoff: 'Stäng av server med "CTRL+C"'
 	},
-	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper'],
+	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper', 'admin'],
+	projektarray: [{id: 'dw', namn: 'Digital Whiteboard'}, {id: 'mat', namn: 'MatAppen'}, {id: 'res', namn: 'Resor'}, {id: 'utb', namn: 'Utbildning/Föreläsning'}, {id: 'sam', namn: 'Sammordning'}],
 	projekt: {
 		dw: {
 			namn: 'Digital Whiteboard'

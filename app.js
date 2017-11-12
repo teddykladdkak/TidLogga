@@ -120,13 +120,20 @@ io.sockets.on('connection', function (socket, username) {
 			for (var i = finns.projekt.length - 1; i >= 0; i--) {
 				makedirektory(finns.projekt[i], finns.vgrid);
 			};
-			socket.username = vgrid;
 			socket.emit('anvandare', finns);
+			socket.broadcast.emit('loggoutuser', finns.vgrid);
 		};
 	});
 	
 	socket.on('startadmin', function (vgrid) {
 		console.log('Admin startar...');
+		var finns = checkadmin(vgrid);
+		var allusers = global['allusers'];
+		if(!finns){}else{
+			socket.emit('admininfo', {"vgrid": vgrid, "data": allusers});
+		};
+	});
+	function checkadmin(vgrid){
 		var finns = false;
 		var allusers = global['allusers'];
 		for (var i = allusers.length - 1; i >= 0; i--) {
@@ -135,11 +142,21 @@ io.sockets.on('connection', function (socket, username) {
 			};
 		};
 		console.log(finns);
+		return finns;
+	};
+	socket.on('uppdaterausers', function (askdata) {
+		var finns = checkadmin(askdata.vgrid);
 		if(!finns){}else{
-			socket.emit('admininfo', allusers);
+			var tosave = {"data": askdata.nyausers};
+			fs.writeFile(config.location.users, JSON.stringify(tosave, null, ' '), (err) => {
+				if (err){
+					console.log('Något gick fel i skapandet av ny fil.')
+				}else{
+					loadusers();
+				};
+			});
 		};
 	});
-
 	socket.on('checkprojekt', function (askdata) {
 		var gammaldata = [];
 		fs.readdir('users/' + askdata.vgrid + '/' + askdata.projekt, function(err, items) {

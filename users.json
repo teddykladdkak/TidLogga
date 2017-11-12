@@ -1,13 +1,37 @@
 {
- "data": [{
-			"vgrid": "test3",
-			"namn": "Test Testsson",
-			"projekt": ["dw", "mat", "res", "utb", "sam"],
-			"admin": false
-		},{
-			"vgrid": "test1",
-			"namn": "Test Testsson",
-			"projekt": ["dw", "mat", "res", "sam"],
-			"admin": true
-		}]
+ "data": [
+  {
+   "projekt": [
+    "dw",
+    "mat",
+    "res",
+    "utb",
+    "sam"
+   ],
+   "namn": "Test Testsson",
+   "vgrid": "test3",
+   "admin": false
+  },
+  {
+   "projekt": [
+    "dw",
+    "mat",
+    "res",
+    "sam"
+   ],
+   "namn": "Test Testsson",
+   "vgrid": "test1",
+   "admin": true
+  },
+  {
+   "projekt": [
+    "dw",
+    "res",
+    "sam"
+   ],
+   "namn": "Testina Test",
+   "vgrid": "test5",
+   "admin": false
+  }
+ ]
 }

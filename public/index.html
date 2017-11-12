@@ -172,6 +172,14 @@
 			var brake = document.createElement('br');
 			parent.appendChild(brake);
 		};
+		function findinarray(word, array){
+			for (var i = array.length - 1; i >= 0; i--) {
+				if(array[i] == word){
+					return true;
+				};
+			};
+			return false;
+		};
 	</script>
 	<style type="text/css">
 		#header {
@@ -198,7 +206,7 @@
 			zoom: 1.5;
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #admin{
 			border: solid #000 3px;
 		}
 		#namn {
@@ -217,14 +225,14 @@
 		#loggwrapper table{
 			margin-bottom: 10px;
 		}
-		#loggwrapper table, #loggwrapper table td, #skrivutpapper table, #skrivutpapper table td{
+		#loggwrapper table, #loggwrapper table td, #skrivutpapper table, #skrivutpapper table td, #admin table, #admin table td{
 			border-collapse: collapse;
 			border: solid 2px #000;
 		}
 		#skrivutpapper table, #skrivutpapper table tr{
 			width: 100%;
 		}
-		#skrivutpapper table tbody tr{
+		#skrivutpapper table tbody tr, #admin table tbody tr{
 			text-align: center;
 		}
 		#skrivutpapper table thead tr{
@@ -245,7 +253,7 @@
 			text-align: left;
 		}*/
 		@media print { 
-			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head{
+			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin{
 				display: none;
 			}
 			#skrivutpapper{
@@ -314,6 +322,7 @@
 	<div id="skrivutpapper">
 			
 	</div>
+	<div id="admin"></div>
 	<script src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript">
 		//Tar server id enbart för att koppla till socket
@@ -326,7 +335,10 @@
 		socket.on('message', function(message) {
 			console.log(message);
 		});
-
+		socket.on('disconnect', function () {
+			//alert('Koppling till server ligger nere!');
+			location.reload();
+		});
 		function loggain(){
 			var nameinput = document.getElementById('idnamn').value;
 			socket.emit('checkuser', nameinput);
@@ -358,13 +370,130 @@
 			showhide('none', 'namn');
 			showhide('login', 'projekt');
 		});
+		socket.on('loggoutuser', function(vgrid) {
+			var sessionvgrid = document.getElementById('tid').getAttribute('data-vgrid');
+			console.log();
+			if(!sessionvgrid){}else{
+				if(sessionvgrid == vgrid){
+					location.reload();
+				};
+			};
+		});
 		function admin(vgrid){
 			socket.emit('startadmin', vgrid);
 		};
-		socket.on('admininfo', function(anvandare) {
-			console.log(anvandare);
+		socket.on('admininfo', function(respons) {
+			console.log(respons);
+			var adminwrapper = document.getElementById('admin');
+				var admintable = document.createElement('table');
+					var adminhead = document.createElement('thead');
+						var adminheadtr = document.createElement('tr');
+						var extraelem = ['Namn', 'VGRid', 'Admin'];
+						for (var i = 0; i < extraelem.length; i++){
+							var adminheadadmin = document.createElement('td');
+								var adminheadadmintext = document.createTextNode(extraelem[i]);
+								adminheadadmin.appendChild(adminheadadmintext);
+							adminheadtr.appendChild(adminheadadmin);
+						};
+						for (var i = 0; i < config.projektarray.length; i++){
+							var td = document.createElement('td');
+								var tdtext = document.createTextNode(config.projektarray[i].namn);
+								td.appendChild(tdtext);
+							adminheadtr.appendChild(td);
+						};
+						adminhead.appendChild(adminheadtr);
+					admintable.appendChild(adminhead);
+					var adminbody = document.createElement('tbody');
+					for (var i = 0; i < respons.data.length; i++){
+						newadminuser(adminbody, respons.data[i]);
+					};
+					admintable.appendChild(adminbody);
+				adminwrapper.appendChild(admintable);
+				var knappar = [{namn: 'Spara', funktion: 'saveusers("' + respons.vgrid + '");'}, {namn: 'Avbryt', funktion: 'avbrytadmin();'}, {namn: 'Ny Användare', funktion: 'nyuser();'}];
+				for (var i = 0; i < knappar.length; i++){
+					var button = document.createElement('input');
+						button.setAttribute('type', 'button');
+						button.setAttribute('value', knappar[i].namn);
+						button.setAttribute('onclick', knappar[i].funktion);
+					adminwrapper.appendChild(button);
+				};
+			showhide('projekt', 'admin');
 		});
-		
+		function saveusers(vgrid){
+			var allusers = document.getElementById('admin').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+			var nyausers = [];
+			for (var i = 0; i < allusers.length; i++){
+				var allinputs = allusers[i].getElementsByTagName('input');
+				var userarray = {"projekt": []};
+				for (var a = 0; a < allinputs.length; a++){
+					var id = allinputs[a].getAttribute('data-id');
+					var type = allinputs[a].getAttribute('type');
+					if(type == 'text'){
+						var value = allinputs[a].value;
+						userarray[id] = value;
+					}else if(type == 'checkbox'){
+						if(id == 'admin'){
+							userarray.admin = allinputs[a].checked;
+						}else{
+							if(allinputs[a].checked){
+								userarray.projekt.push(id);
+							};
+						};
+					};
+				};
+				if(userarray.vgrid == ''){}else{
+					nyausers.push(userarray);
+				};
+			};
+			console.log(nyausers);
+			socket.emit('uppdaterausers', {"vgrid": vgrid, "nyausers": nyausers});
+			avbrytadmin();
+		};
+		function avbrytadmin(){
+			var wrapper = document.getElementById('admin');
+			removechilds(wrapper);
+			showhide('admin', 'projekt');
+		};
+		function nyuser(){
+			var tbody = document.getElementById('admin').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0];
+			var blankuser = {"admin": false, "namn": "", "vgrid": "", "projekt": []};
+			newadminuser(tbody, blankuser);
+		};
+		function newadminuser(element, user){
+			console.log(user);
+			var line = document.createElement('tr');
+			var textsegment = ['namn', 'vgrid'];
+			for (var i = 0; i < textsegment.length; i++){
+				var namn = document.createElement('td');
+					var namninput = document.createElement('input');
+						namninput.setAttribute('data-id', textsegment[i]);
+						namninput.setAttribute('type', 'text');
+						namninput.setAttribute('value', user[textsegment[i]]);
+					namn.appendChild(namninput);
+				line.appendChild(namn);
+			};
+				var adminchecktd = document.createElement('td');
+					var admincheck = document.createElement('input');
+						admincheck.setAttribute('data-id', 'admin');
+						admincheck.setAttribute('type', 'checkbox');
+						if(user['admin']){
+							admincheck.checked = true;
+						};
+					adminchecktd.appendChild(admincheck);
+				line.appendChild(adminchecktd);
+			for (var i = 0; i < config.projektarray.length; i++){
+				var td = document.createElement('td');
+					var checkbox = document.createElement('input');
+						checkbox.setAttribute('type', 'checkbox');
+						checkbox.setAttribute('data-id', config.projektarray[i].id);
+						if(findinarray(config.projektarray[i].id, user.projekt)){
+							checkbox.checked = true;
+						};
+					td.appendChild(checkbox);
+				line.appendChild(td);
+			};
+			element.appendChild(line);
+		};
 		socket.on('erroranvandare', function(message) {
 			adderror('namnstatus', 'Användarnamn kunde inte hittas!');
 			console.log('Användarnamn kunde inte hittas!');
