@@ -14,7 +14,49 @@ var config = {
 		infoturnoff: 'Stäng av server med "CTRL+C"'
 	},
 	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper', 'admin'],
-	projektarray: [{id: 'dw', namn: 'Digital Whiteboard'}, {id: 'mat', namn: 'MatAppen'}, {id: 'res', namn: 'Resor'}, {id: 'utb', namn: 'Utbildning/Föreläsning'}, {id: 'sam', namn: 'Sammordning'}],
+	projektarray: [{
+		id: 'dw',
+		namn: 'Digital Whiteboard'
+	}, {
+		id: 'mat',
+		namn: 'MatAppen'
+	}, {
+		id: 'res',
+		namn: 'Resor'
+	}, {
+		id: 'utb',
+		namn: 'Utbildning/Föreläsning'
+	}, {
+		id: 'sam',
+		namn: 'Sammordning'
+	}, {
+		id: 'patplatt',
+		namn: 'Vinnova Patientplatta'
+	}, {
+		id: 'person',
+		namn: 'Personallista'
+	}, {
+		id: 'kog',
+		namn: 'Kom & Gå'
+	}, {
+		id: 'kcal',
+		namn: 'Kaloriräknare'
+	}, {
+		id: 'slut',
+		namn: 'Slutanteckning'
+	}, {
+		id: 'vtsk',
+		namn: 'Vätskelista'
+	}, {
+		id: 'remiss',
+		namn: 'Remiss'
+	}, {
+		id: 'utskriv',
+		namn: 'Utskrivning'
+	}, {
+		id: 'piller',
+		namn: 'Pillerräknaren'
+	}],
 	projekt: {
 		dw: {
 			namn: 'Digital Whiteboard'
@@ -30,6 +72,33 @@ var config = {
 		},
 		sam: {
 			namn: 'Sammordning'
+		},
+		patplatt: {
+			namn: 'Vinnova Patientplatta'
+		},
+		person: {
+			namn: 'Personallista'
+		},
+		kog: {
+			namn: 'Kom & Gå'
+		},
+		kcal: {
+			namn: 'Kaloriräknare'
+		},
+		slut: {
+			namn: 'Slutanteckning'
+		},
+		vtsk: {
+			namn: 'Vätskelista'
+		},
+		remiss: {
+			namn: 'Remiss'
+		},
+		utskriv: {
+			namn: 'Utskrivning'
+		},
+		piller: {
+			namn: 'Pillerräknaren'
 		}
 	},
 	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Projekt', 'Tid Månad'],
