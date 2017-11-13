@@ -349,7 +349,7 @@
 			location.reload();
 		});
 		function loggain(){
-			var nameinput = document.getElementById('idnamn').value;
+			var nameinput = document.getElementById('idnamn').value.toLowerCase();
 			socket.emit('checkuser', nameinput);
 		};
 
