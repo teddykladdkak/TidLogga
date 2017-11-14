@@ -21,8 +21,8 @@
 	<script type="text/javascript">
 		function timecounter(array){
 			var countarray = {"t": 0, "m": 0, "s": 0};
-			for (var i = val.length - 1; i >= 0; i--) {
-				var split = val[i].split(':');
+			for (var i = array.length - 1; i >= 0; i--) {
+				var split = array[i].split(':');
 				if(split.length == 3){
 					var seconds = parseInt(countarray.s) + parseInt(split[2]);
 					if(seconds >= 60){
@@ -381,7 +381,6 @@
 		};
 
 		socket.on('anvandare', function(responsdata) {
-			console.log(responsdata);
 			document.getElementById('tid').setAttribute('data-vgrid', responsdata.vgrid);
 			var namn = document.getElementById('namn');
 				removechilds(namn);
@@ -939,11 +938,81 @@
 			};
 			countallpassskrivut();
 			if(respons.todo == 'print'){
-				window.print();
+				//window.print();
 			}else if(respons.todo == 'excell'){
 				makeexcell(respons.manad);
 			};
 		});
+		function addskrivutline(projektid, array, data){
+			
+			var table = document.getElementById('skrivutpapper').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0];
+				var oldtr = table.getElementsByClassName(projektid);
+				var tr = document.createElement('tr');
+					tr.setAttribute('class', projektid);
+
+				//Projekt namn
+				if(oldtr.length == 0){
+					tr.setAttribute('class', projektid + ' topborder');
+					var projekttd = document.createElement('td');
+						projekttd.setAttribute('rowspan', '1');
+						projekttd.setAttribute('class', 'projektnamn');
+						var projekttdtext = document.createTextNode(config.projekt[projektid].namn);
+						projekttd.appendChild(projekttdtext);
+					tr.appendChild(projekttd);
+				}else{
+					var projektnamn = oldtr[0].getElementsByClassName('projektnamn')[0];
+					projektnamn.setAttribute('rowspan', parseInt(projektnamn.getAttribute('rowspan')) + 1);
+				};
+				//Om inga stämplingar finns gör inte följande
+				if(!data){}else{
+					//Dag nummer
+					if(oldtr.length == 0){
+						adddagskrivut(tr, projektid + 'dagnummer' + data.in.datum, data.in.datum);
+					}else{
+						var dagnummertd = document.getElementsByClassName(projektid + 'dagnummer' + data.in.datum);
+						if(dagnummertd.length == 0){
+							adddagskrivut(tr, projektid + 'dagnummer' + data.in.datum, data.in.datum);
+						}else{
+							dagnummertd[0].setAttribute('rowspan', parseInt(dagnummertd[0].getAttribute('rowspan')) + 1);
+						};
+					};
+				};
+
+
+
+				for (var i = 0; i < array.length; i++){
+					var td = document.createElement('td');
+						var tdtext = document.createTextNode(array[i]);
+						td.appendChild(tdtext);
+					tr.appendChild(td);
+				};
+
+				//Om inga stämplingar finns gör inte följande
+				if(!data){}else{
+					//Tid dag
+					var countmilisec = parseInt(data.ut.milisec) - parseInt(data.in.milisec);
+					if(oldtr.length == 0){
+						nytimeskrivut(tr, projektid + 'dagcount' + data.in.datum, countmilisec);
+					}else{
+						var dagcounttd = document.getElementsByClassName(projektid + 'dagcount' + data.in.datum);
+						if(dagcounttd.length == 0){
+							nytimeskrivut(tr, projektid + 'dagcount' + data.in.datum, countmilisec);
+						}else{
+							updattimeskrivut(dagcounttd, countmilisec);
+						};
+					};
+
+					//Tid projekt
+					if(oldtr.length == 0){
+						nytimeskrivut(tr, projektid + 'passcount passcount', countmilisec);
+					}else{
+						var projekttime = oldtr[0].getElementsByClassName(projektid + 'passcount');
+						updattimeskrivut(projekttime, countmilisec);
+					};
+				};
+			table.appendChild(tr);
+			
+		};
 		function adddagskrivut(element, namn, datum){
 			var dagnummertd = document.createElement('td');
 				dagnummertd.setAttribute('rowspan', '1');
@@ -953,88 +1022,56 @@
 				dagnummertd.appendChild(dagnummertdtext);
 			element.appendChild(dagnummertd);
 		};
-		function addskrivutline(projektid, array, data){
-			var table = document.getElementById('skrivutpapper').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0];
-				var oldtr = table.getElementsByClassName(projektid);
-				var tr = document.createElement('tr');
-					tr.setAttribute('class', projektid);
-				if(oldtr.length == 0){
-					tr.setAttribute('class', projektid + ' topborder');
-					var projekttd = document.createElement('td');
-						projekttd.setAttribute('rowspan', '1');
-						projekttd.setAttribute('class', 'projektnamn');
-						var projekttdtext = document.createTextNode(config.projekt[projektid].namn);
-						projekttd.appendChild(projekttdtext);
-					tr.appendChild(projekttd);
-					if(!data){}else{
-						adddagskrivut(tr, projektid + 'dagnummer' + data.in.datum, data.in.datum);
-					};
-				}else{
-					oldtr[0].firstChild.setAttribute('rowspan', parseInt(oldtr[0].firstChild.getAttribute('rowspan')) + 1);
-					if(!data){}else{
-						var dagnummertd = oldtr[0].getElementsByClassName(projektid + 'dagnummer' + data.in.datum);
-						if(dagnummertd.length == 0){
-							adddagskrivut(tr, projektid + 'dagnummer' + data.in.datum, data.in.datum);
-						}else{
-							dagnummertd[0].setAttribute('rowspan', parseInt(dagnummertd[0].getAttribute('rowspan')) + 1);
-						};
-					};
-				};
-				for (var i = 0; i < array.length; i++){
-					var td = document.createElement('td');
-						var tdtext = document.createTextNode(array[i]);
-						td.appendChild(tdtext);
-					tr.appendChild(td);
-				};
-				if(!data){}else{
-					var countmilisec = parseInt(data.ut.milisec) - parseInt(data.in.milisec);
-					if(oldtr.length == 0){
-						nytimeskrivut(tr, projektid + 'dagcount' + data.in.datum, countmilisec);
-						nytimeskrivut(tr, projektid + 'passcount passcount', countmilisec);
-					}else{
-						var countforday = oldtr[0].getElementsByClassName(projektid + 'dagcount' + data.in.datum);
-						if(countforday.length == 0){
-							nytimeskrivut(tr, projektid + 'dagcount' + data.in.datum, countmilisec);
-						}else{
-							updattimeskrivut(countforday, countmilisec);
-						};
-						var countforpass = oldtr[0].getElementsByClassName(projektid + 'passcount');
-						updattimeskrivut(countforpass, countmilisec);
-					};
-				};
-				table.appendChild(tr);
-		};
 		function nytimeskrivut(element, namn, countmilisec){
 			var nytime = timebetween('', '', countmilisec);
 			var daycounttd = document.createElement('td');
 				daycounttd.setAttribute('rowspan', '1');
 				daycounttd.setAttribute('class', namn);
 				daycounttd.setAttribute('data-milisec', countmilisec);
-				var daycounttdtdtext = document.createTextNode(addzero(nytime.t) + ':' + addzero(nytime.m) + ':' + addzero(nytime.s));
+
+
+
+
+				var time = addzero(nytime.t) + ':' + addzero(nytime.m) + ':' + addzero(nytime.s);
+				daycounttd.setAttribute('data-time', time);
+
+
+
+
+				var daycounttdtdtext = document.createTextNode(time);
 				daycounttd.appendChild(daycounttdtdtext);
 			element.appendChild(daycounttd);
 		};
 		function updattimeskrivut(allelem, countmilisec){
 			var nymilisec = parseInt(allelem[0].getAttribute('data-milisec')) + countmilisec;
 			var time = timebetween('', '', nymilisec);
+			var testtimebetween = timebetween('', '', countmilisec);
+			var timetestarray = [allelem[0].getAttribute('data-time'), addzero(testtimebetween.t) + ':' + addzero(testtimebetween.m) + ':' + addzero(testtimebetween.s)];
+			var timetest = timecounter(timetestarray);
+			allelem[0].setAttribute('data-time', addzero(timetest.t) + ':' + addzero(timetest.m) + ':' + addzero(timetest.s));
 			allelem[0].setAttribute('rowspan', parseInt(allelem[0].getAttribute('rowspan')) + 1);
 			allelem[0].setAttribute('data-milisec', nymilisec);
 			removechilds(allelem[0]);
-			var daycounttdtdtext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+			//var daycounttdtdtext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+			var daycounttdtdtext = document.createTextNode(addzero(timetest.t) + ':' + addzero(timetest.m) + ':' + addzero(timetest.s));
 			allelem[0].appendChild(daycounttdtdtext);
 		};
 		function countallpassskrivut(){
 			var table = document.getElementById('skrivutpapper').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0];
 			var allpasscount = table.getElementsByClassName('passcount');
-			var millisec = 0;
+			//var millisec = 0;
+			var timetestarray = [];
 			for (var i = allpasscount.length - 1; i >= 0; i--) {
-				var millisec = millisec + parseInt(allpasscount[i].getAttribute('data-milisec'));
+			//	var millisec = millisec + parseInt(allpasscount[i].getAttribute('data-milisec'));
+				timetestarray.push(allpasscount[i].getAttribute('data-time'));
 			};
-			var time = timebetween('', '', millisec);
+			var timetest = timecounter(timetestarray);
+			//var time = timebetween('', '', millisec);
 			var firsttr = table.getElementsByTagName('tr');
 				var allpasstd = document.createElement('td');
 					allpasstd.setAttribute('rowspan', firsttr.length);
-					var allpasstext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+					//var allpasstext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+					var allpasstext = document.createTextNode(addzero(timetest.t) + ':' + addzero(timetest.m) + ':' + addzero(timetest.s));
 					allpasstd.appendChild(allpasstext);
 				firsttr[0].appendChild(allpasstd);
 		};

@@ -258,8 +258,8 @@
 		};
 		function timecounter(array){
 			var countarray = {"t": 0, "m": 0, "s": 0};
-			for (var i = val.length - 1; i >= 0; i--) {
-				var split = val[i].split(':');
+			for (var i = array.length - 1; i >= 0; i--) {
+				var split = array[i].split(':');
 				if(split.length == 3){
 					var seconds = parseInt(countarray.s) + parseInt(split[2]);
 					if(seconds >= 60){
@@ -283,6 +283,8 @@
 			};
 			return countarray;
 		};
+		var timecounterarray = ['00:00:12', '00:00:03', '00:02:14', '00:00:03', '00:59:23', '00:00:02', '00:01:39', '00:00:01', '00:00:03', '00:00:03']
+		console.log(timecounter(timecounterarray));
 	</script>
 	<style type="text/css">
 		#header {
