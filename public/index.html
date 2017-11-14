@@ -19,6 +19,33 @@
 
 	<script type="application/javascript" src="config.js"></script>
 	<script type="text/javascript">
+		function timecounter(array){
+			var countarray = {"t": 0, "m": 0, "s": 0};
+			for (var i = val.length - 1; i >= 0; i--) {
+				var split = val[i].split(':');
+				if(split.length == 3){
+					var seconds = parseInt(countarray.s) + parseInt(split[2]);
+					if(seconds >= 60){
+						var seconds = parseInt(seconds) - 60;
+						var extraminut = 1;
+					}else{
+						var extraminut = 0;
+					};
+					countarray.s = seconds;
+					var minut = parseInt(countarray.m) + parseInt(split[1]) + parseInt(extraminut);
+					if(minut >= 60){
+						var minut = parseInt(minut) - 60;
+						var extrahour = 1;
+					}else{
+						var extrahour = 0;
+					};
+					countarray.m = minut;
+					var hour = parseInt(countarray.t) + parseInt(split[0]) + parseInt(extrahour);
+					countarray.t = hour;
+				};
+			};
+			return countarray;
+		};
 		function load(){
 			var logininput = document.getElementById('idnamn');
 				logininput.focus();
