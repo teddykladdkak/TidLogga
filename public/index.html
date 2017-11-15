@@ -78,6 +78,7 @@
 				var klickfunc = utelem[i].getAttribute('onclick');
 				if(!klickfunc){}else{
 					utelem[i].setAttribute('data-onclick', klickfunc);
+					utelem[i].setAttribute('class', utelem[i].getAttribute('class').replace('enable', 'disable'));
 					utelem[i].disabled = true;
 				};
 			};
@@ -88,6 +89,9 @@
 				var klickfunc = inelem[i].getAttribute('data-onclick');
 				if(!klickfunc){}else{
 					inelem[i].setAttribute('onclick', klickfunc);
+					var oldclass = inelem[i].getAttribute('class').replace('disable', 'enable');
+					inelem[i].setAttribute('class', oldclass);
+					inelem[i].removeAttribute('data-onclick');
 					inelem[i].disabled = false;
 				};
 			};
@@ -228,6 +232,14 @@
 		};
 	</script>
 	<style type="text/css">
+		body{
+			
+		}
+		#wrapper{
+			max-width: 1000px;
+			margin-right: auto;
+			margin-left: auto;
+		}
 		#header {
 			font-size: 20px;
 			vertical-align: top;
@@ -239,14 +251,22 @@
 			font-family: verdana;
 			text-align: center;
 		}
-		.table {
-			display: table;
+		#projektnamn, #namn {
+			text-align: left;
 		}
-		.tr {
-			display: table-row;
-		}
-		.td{
-			display: table-cell;
+		@media screen and (min-width: 450px) {
+			.table {
+				display: table;
+			}
+			.tr {
+				display: table-row;
+			}
+			.td{
+				display: table-cell;
+			}
+			#projektnamn {
+				text-align: right;
+			}
 		}
 		input, select, #klockadata, p {
 			zoom: 1.5;
@@ -254,14 +274,8 @@
 		i, input, select, #klockadata, p {
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #admin, #statistik{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #statistik{
 			border: solid #000 3px;
-		}
-		#namn {
-			text-align: left;
-		}
-		#projektnamn {
-			text-align: right;
 		}
 		#loggwrapper table{
 			margin: 5px 10px 10px 10px;
@@ -310,6 +324,49 @@
 			align-items: left;
 			justify-content: left;
 		}
+		i{
+			-webkit-transition: all 200ms linear;
+		    -moz-transition: all 200ms linear;
+		    -o-transition: all 200ms linear;
+		    -ms-transition: all 200ms linear;
+		    transition: all 200ms linear;
+		}
+		@media screen and (min-width: 650px) {
+			#projekt i{
+				font-size: 7em!important;
+			}
+			#buttonwrapper{
+				text-align: center;
+			}
+		}
+		#loggwrapper table {
+			margin-left: auto;
+			margin-right: auto;
+		}
+		#loggwrapper table tbody td{
+			padding: 10px;
+		}
+		@media screen and (max-width: 300px) {
+			#projekt select, input[type=text], input[type=button], input[type=date], input[type=time]{
+				width: 88%;
+			}
+			.center{
+				display: inline-block;
+				align-items: left;
+				justify-content: left;
+			}
+		}
+		@media screen and (max-width: 700px) {
+			#loggwrapper table{
+				width: 100%;
+			}
+			#loggwrapper table select{
+				margin: 0px;
+			}
+			#loggwrapper table tbody td{
+				padding: 5px;
+			}
+		}
 		@media print { 
 			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin, #statistik{
 				display: none;
@@ -321,80 +378,106 @@
 				border: solid #000 3px;
 			}
 		}
+		.disable{
+			opacity: 0.5;
+		}
+		i.disable:hover{
+			color: #000;
+		}
+		#klockadata{
+			text-align: center;
+		}
 	</style>
 </head>
 <body onload="load();">
-	<div id="head">TidLogga</div>
-	<div id="header" class="table">
-		<div class="tr">
-			<div id="namn" class="td">Välkommen XXXX</div>
-			<div id="projektnamn" class="td">XXXXXXXXX</div>
+	<div id="wrapper">
+		<div id="head">TidLogga</div>
+		<div id="header" class="table">
+			<div class="tr">
+				<div id="namn" class="td">Välkommen XXXX</div>
+				<div id="projektnamn" class="td">XXXXXXXXX</div>
+			</div>
 		</div>
-	</div>
-	<div id="login">
-		<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
-		<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i>
-		<!--<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">--><br/>
-		<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
-		<!--<i class="fa fa-camera-retro fa-5x"></i>-->
-	</div>
-	<div id="projekt">
-		<select id="listaprojekt">
-			<option value="none">Välj Projekt</option>
-		</select><br/>
-		<i class="fa fa-clock-o fa-4x" aria-hidden="true" onclick="valjprojekt();"></i>
-		<!--<input type="button" value="Klocka" onclick="valjprojekt();">-->
-		<i class="fa fa-list fa-4x" aria-hidden="true" onclick="getlogg();"></i>
-		<!--<input type="button" value="Logg" onclick="getlogg();">-->
-		<i class="fa fa-print fa-4x" aria-hidden="true" onclick="loadskrivut();"></i>
-		<!--<input type="button" value="Skriv ut..." onclick="loadskrivut();">-->
-		<i class="fa fa-pie-chart fa-4x" aria-hidden="true" onclick="getpie();"></i>
-		<!--<input type="button" value="Statistik" onclick="getpie();">-->
-	</div>
-	<div id="klocka">
-		<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakatillprojekt();"></i>
-		<!--<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">-->
-		<div id="klockadata">
-			<span id="intid">XX:XX</span> <span id="tid">XX:XX:XX</span>
+		<div id="login">
+			<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
+			<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i>
+			<!--<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">--><br/>
+			<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
+			<!--<i class="fa fa-camera-retro fa-5x"></i>-->
 		</div>
-		<input type="button" value="Klocka in" class="in" onclick="startclock('nu')"><input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');"><br/>
-		<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');"><input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">
-	</div>
-	<div id="klockaannantid">
-		<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
-		<input type="button" id="annantidbutton" value="Klocka in/ut" onclick="startclock('annat')"><input type="button" id="annantidbutton" value="Avbryt" onclick="showhide('klockaannantid', 'klocka');">
-	</div>
-	<div id="loggwrapper">
-		
-	</div>
-	<div id="loggedit">
-		<p>In stämpling</p>
-		<input type="date" id="loggeditindat"><br/>
-		<input type="time" id="loggeditintime">
-		<p>Ut stämpling</p>
-		<input type="date" id="loggeditutdat"><br/>
-		<input type="time" id="loggedituttime"><br/>
-		<input type="button" value="Spara" onclick="sendedit();"><input type="button" value="Avbryt" onclick="avbrytedit();">
-	</div>
-	<div id="skrivut">
+		<div id="projekt">
+			<select id="listaprojekt">
+				<option value="none">Välj Projekt</option>
+			</select>
+			<div id="buttonwrapper">
+				<i class="fa fa-clock-o fa-4x" aria-hidden="true" onclick="valjprojekt();"></i>
+				<!--<input type="button" value="Klocka" onclick="valjprojekt();">-->
+				<i class="fa fa-list fa-4x" aria-hidden="true" onclick="getlogg();"></i>
+				<!--<input type="button" value="Logg" onclick="getlogg();">-->
+				<i class="fa fa-print fa-4x" aria-hidden="true" onclick="loadskrivut();"></i>
+				<!--<input type="button" value="Skriv ut..." onclick="loadskrivut();">-->
+				<i class="fa fa-pie-chart fa-4x" aria-hidden="true" onclick="getpie();"></i>
+				<!--<input type="button" value="Statistik" onclick="getpie();">-->
+			</div>
+		</div>
+		<div id="klocka">
+			<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakatillprojekt();"></i>
+			<!--<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">-->
+				<div id="klockadata">
+					<span id="intid">XX:XX</span> <span id="tid">XX:XX:XX</span>
+				</div>
+				<div class="center">
+				<i class="fa fa-play fa-3x in enable" aria-hidden="true" onclick="startclock('nu')"></i>
+				<!--<input type="button" value="Klocka in" class="in" onclick="startclock('nu')">-->
+				<i class="fa fa-stop fa-3x ut enable" aria-hidden="true" onclick="stopclock('nu');"></i>
+				<!--<input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');">-->
+				</div>
+				<p>Annan tid: <span class="checkboxwrapper"><i class="fa fa-play in enable" aria-hidden="true" onclick="annantid('in')"></i><i class="fa fa-stop ut enable" aria-hidden="true" onclick="annantid('ut');""></i></span></p>
+				<!--<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');">
+				<input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">-->
+		</div>
+		<div id="klockaannantid">
+			<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
+			<i class="fa fa-check-circle fa-4x" aria-hidden="true" id="annantidbutton" onclick="startclock('annat')"></i>
+			<!--<input type="button" id="annantidbutton" value="Klocka in/ut" onclick="startclock('annat')">-->
+			<i class="fa fa-times-circle fa-4x" aria-hidden="true" id="annantidbutton" onclick="showhide('klockaannantid', 'klocka');"></i>
+			<!--<input type="button" id="annantidbutton" value="Avbryt" onclick="showhide('klockaannantid', 'klocka');">-->
+		</div>
+		<div id="loggwrapper">
 			
-	</div>
-	<div id="skrivutpapper">
-			
-	</div>
-	<div id="admin"></div>
-	<div id="statistik">
-		<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakafranstatistik();"></i>
-		<!--<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">-->
-		<div id="piechart"></div>
-		<div class="center">
-			<table>
-				<tr>
-					<td><i class="fa fa-chevron-left fa-3x" aria-hidden="true" onclick="nextpie('-')"></i></td>
-					<td id="piedatum">XXXX-XX</td>
-					<td><i class="fa fa-chevron-right fa-3x" aria-hidden="true" onclick="nextpie('+')"></i></td>
-				</tr>
-			</table>
+		</div>
+		<div id="loggedit">
+			<p>In stämpling</p>
+			<input type="date" id="loggeditindat"><br/>
+			<input type="time" id="loggeditintime">
+			<p>Ut stämpling</p>
+			<input type="date" id="loggeditutdat"><br/>
+			<input type="time" id="loggedituttime"><br/>
+			<i class="fa fa-check-circle fa-4x" aria-hidden="true" onclick="sendedit();"></i>
+			<!--<input type="button" value="Spara" onclick="sendedit();">-->
+			<i class="fa fa-times-circle fa-4x" aria-hidden="true" onclick="avbrytedit();"></i>
+			<!--<input type="button" value="Avbryt" onclick="avbrytedit();">-->
+		</div>
+		<div id="skrivut">
+				
+		</div>
+		<div id="skrivutpapper">
+				
+		</div>
+		<div id="admin"></div>
+		<div id="statistik">
+			<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakafranstatistik();"></i>
+			<!--<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">-->
+			<div id="piechart"></div>
+			<div class="center">
+				<table>
+					<tr>
+						<td><i class="fa fa-chevron-left fa-3x" aria-hidden="true" onclick="nextpie('-')"></i></td>
+						<td id="piedatum">XXXX-XX</td>
+						<td><i class="fa fa-chevron-right fa-3x" aria-hidden="true" onclick="nextpie('+')"></i></td>
+					</tr>
+				</table>
+			</div>
 		</div>
 	</div>
 	<script src="/socket.io/socket.io.js"></script>
@@ -438,7 +521,7 @@
 				listaprojekt.appendChild(option);
 			};
 			if(responsdata.admin){
-				var projektwrapper = document.getElementById('projekt');
+				var projektwrapper = document.getElementById('buttonwrapper');
 					//<i class="fa fa-user-plus" aria-hidden="true"></i>
 					var adminbutton = document.createElement('i');
 						adminbutton.setAttribute('class', 'fa fa-user-plus fa-4x');
@@ -612,7 +695,13 @@
 				var datum = getDate();
 			}else if(todo == 'annat'){
 				var dateannan = document.getElementById('dateannan').value;
+				if(dateannan == ''){
+					var dateannan = getDate().datum;
+				};
 				var timeannan = document.getElementById('timeannan').value;
+				if(timeannan == ''){
+					var timeannan = getDate().tid;
+				};
 				var datum = getDate(dateannan, timeannan);
 				showhide('klockaannantid', 'klocka');
 			}else if(todo == 'save'){
@@ -654,6 +743,14 @@
 			}else if(todo == 'annat'){
 				var dateannan = document.getElementById('dateannan').value;
 				var timeannan = document.getElementById('timeannan').value;
+				var dateannan = document.getElementById('dateannan').value;
+				if(dateannan == ''){
+					var dateannan = getDate().datum;
+				};
+				var timeannan = document.getElementById('timeannan').value;
+				if(timeannan == ''){
+					var timeannan = getDate().tid;
+				};
 				var datum = getDate(dateannan, timeannan);
 			}else{
 				console.log('Något gick fel i "stopclock()".');
@@ -861,12 +958,12 @@
 			showhide('loggwrapper', 'loggedit');
 		};
 		function sendedit(){
-			var loggeditindat = document.getElementById('loggeditindat').value;
-			var loggeditintime = document.getElementById('loggeditintime').value;
-			var tidin = getDate(loggeditindat, loggeditintime, '');
-			var loggeditutdat = document.getElementById('loggeditutdat').value;
-			var loggedituttime = document.getElementById('loggedituttime').value;
-			var tidut = getDate(loggeditutdat, loggedituttime, '');
+			var loggeditindat = document.getElementById('loggeditindat');
+			var loggeditintime = document.getElementById('loggeditintime');
+			var tidin = getDate(loggeditindat.value, loggeditintime.value, '');
+			var loggeditutdat = document.getElementById('loggeditutdat');
+			var loggedituttime = document.getElementById('loggedituttime');
+			var tidut = getDate(loggeditutdat.value, loggedituttime.value, '');
 			if(tidin.milisec <= tidut.milisec){
 				var wrapper = document.getElementById('loggedit');
 				var arraytosave = {};
@@ -881,8 +978,36 @@
 					arraytosave.ny.in = tidin;
 					arraytosave.ny.ut = tidut;
 				socket.emit('editsegment', arraytosave);
+				loggeditindat.removeAttribute('style');
+				loggeditintime.removeAttribute('style');
+				loggeditutdat.removeAttribute('style');
+				loggedituttime.removeAttribute('style');
 			}else{
 				console.log('Tid är negativ!');
+				if(loggeditindat.value == ''){
+					loggeditindat.setAttribute('style', 'border: solid 1px red;');
+				}else{
+					loggeditindat.removeAttribute('style');
+				};
+				if(loggeditintime.value == ''){
+					loggeditintime.setAttribute('style', 'border: solid 1px red;');
+				}else{
+					loggeditintime.removeAttribute('style');
+				};
+				if(loggeditutdat.value == ''){
+					loggeditutdat.setAttribute('style', 'border: solid 1px red;');
+				}else{
+					loggeditutdat.removeAttribute('style');
+				};
+				if(loggedituttime.value == ''){
+					loggedituttime.setAttribute('style', 'border: solid 1px red;');
+				}else{
+					loggedituttime.removeAttribute('style');
+				};
+				if(tidin.milisec > tidut.milisec){
+					loggeditutdat.setAttribute('style', 'border: solid 1px red;');
+					loggedituttime.setAttribute('style', 'border: solid 1px red;');
+				};
 			};
 		};
 		function avbrytedit(){
@@ -940,7 +1065,7 @@
 				skrivutwrapper.appendChild(select);
 				addbrake(skrivutwrapper);
 				var skrivutknapp = document.createElement('i');
-					skrivutknapp.setAttribute('class', 'fa fa-print fa-3x');
+					skrivutknapp.setAttribute('class', 'fa fa-print fa-4x');
 					skrivutknapp.setAttribute('aria-hidden', 'true');
 					skrivutknapp.setAttribute('onclick', 'startprint("print");');
 				skrivutwrapper.appendChild(skrivutknapp);
@@ -950,7 +1075,7 @@
 					skrivutknapp.setAttribute('onclick', 'startprint("print");');
 				skrivutwrapper.appendChild(skrivutknapp);*/
 				var excellknapp = document.createElement('i');
-					excellknapp.setAttribute('class', 'fa fa-table fa-3x');
+					excellknapp.setAttribute('class', 'fa fa-table fa-4x');
 					excellknapp.setAttribute('aria-hidden', 'true');
 					excellknapp.setAttribute('onclick', 'startprint("excell");');
 				skrivutwrapper.appendChild(excellknapp);
@@ -1034,7 +1159,9 @@
 				}else{
 					var loggsorted = loggsort(respons.data[i].data);
 					for (var a = 0; a < loggsorted.length; a++){
-						if(!loggsorted[a].ut){}else{
+						if(!loggsorted[a].ut){
+							alert('Du har inte stämplat ut från projektet "' + findprojektnamn(respons.data[i].id) + '".\nStämplingen kommer inte finnas med i utskriften.');
+						}else{
 							var time = timebetween(loggsorted[a].in.milisec, loggsorted[a].ut.milisec, '');
 							var printarray = [loggsorted[a].in.tid, loggsorted[a].ut.tid, addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s)];
 							addskrivutline(respons.data[i].id, printarray, loggsorted[a]);
