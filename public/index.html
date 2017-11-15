@@ -297,6 +297,19 @@
 		#skrivutpapper table td{
 			vertical-align: middle;
 		}
+		i:hover{
+			color: blue;
+		}
+		.center{
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.left{
+			display: flex;
+			align-items: left;
+			justify-content: left;
+		}
 		@media print { 
 			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin, #statistik{
 				display: none;
@@ -374,6 +387,15 @@
 		<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakafranstatistik();"></i>
 		<!--<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">-->
 		<div id="piechart"></div>
+		<div class="center">
+			<table>
+				<tr>
+					<td><i class="fa fa-chevron-left fa-3x" aria-hidden="true" onclick="nextpie('-')"></i></td>
+					<td id="piedatum">XXXX-XX</td>
+					<td><i class="fa fa-chevron-right fa-3x" aria-hidden="true" onclick="nextpie('+')"></i></td>
+				</tr>
+			</table>
+		</div>
 	</div>
 	<script src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript">
@@ -701,28 +723,40 @@
 						tillbaka.setAttribute('aria-hidden', 'true');
 						tillbaka.setAttribute('onclick', 'backfromlogg();');
 					loggwrapper.appendChild(tillbaka);
-					/*var tillbaka = document.createElement('input');
-						tillbaka.setAttribute('type', 'button');
-						tillbaka.setAttribute('value', 'Tillbaka');
-						tillbaka.setAttribute('onclick', 'backfromlogg();');
-					loggwrapper.appendChild(tillbaka);*/
-				var month = document.createElement('select');
-					month.setAttribute('onchange', 'loggandramanad(this);');
-				for (var a = loggdata.mothtoload.length - 1; a >= 0; a--) {
-					var option = document.createElement('option');
-						option.setAttribute('value', loggdata.mothtoload[a]);
-						var optiontext = document.createTextNode(loggdata.mothtoload[a]);
-						option.appendChild(optiontext);
-					month.appendChild(option);
-				};
-				loggwrapper.appendChild(month);
-				var datumsplit = loggdata.datum.split('-');
-				month.value = datumsplit[0] + '-' + datumsplit[1];
+				/*var tillbaka = document.createElement('input');
+					tillbaka.setAttribute('type', 'button');
+					tillbaka.setAttribute('value', 'Tillbaka');
+					tillbaka.setAttribute('onclick', 'backfromlogg();');
+				loggwrapper.appendChild(tillbaka);*/
 				var loggsorted = loggsort(loggdata.svar.data);
 				var tableelem = document.createElement('table');
-				for (var i = 0; i < loggsorted.length; i++){
-					addlogglist(loggsorted[i], tableelem, loggdata.projekt, loggdata.vgrid);
-				};
+					var thead = document.createElement('thead');
+						var headline = document.createElement('tr');
+							var headtd = document.createElement('td');
+								headtd.setAttribute('colspan', '5');
+								var monthwrapper = document.createElement('div');
+									monthwrapper.setAttribute('class', 'center');
+									var month = document.createElement('select');
+										month.setAttribute('onchange', 'loggandramanad(this);');
+									for (var a = loggdata.mothtoload.length - 1; a >= 0; a--) {
+										var option = document.createElement('option');
+											option.setAttribute('value', loggdata.mothtoload[a]);
+											var optiontext = document.createTextNode(loggdata.mothtoload[a]);
+											option.appendChild(optiontext);
+										month.appendChild(option);
+									};
+									monthwrapper.appendChild(month);
+								headtd.appendChild(monthwrapper);
+								var datumsplit = loggdata.datum.split('-');
+								month.value = datumsplit[0] + '-' + datumsplit[1];
+							headline.appendChild(headtd);
+						thead.appendChild(headline);
+					tableelem.appendChild(thead);
+					var tbody = document.createElement('tbody');
+					for (var i = 0; i < loggsorted.length; i++){
+						addlogglist(loggsorted[i], tbody, loggdata.projekt, loggdata.vgrid);
+					};
+					tableelem.appendChild(tbody);
 				loggwrapper.appendChild(tableelem);
 				showhide('projekt', 'loggwrapper');
 			};
@@ -1158,13 +1192,42 @@
 			    a.click();
 		};
 		var chartData = [];
-		function getpie(){
+		function nextpie(method){
+			var piedatum = document.getElementById('piedatum').innerText;
+			var datsplit = piedatum.split('-');
+			var year = datsplit[0];
+			if(method == '+'){
+				var month = parseInt(datsplit[1]) + 1;
+				if(month == '13'){
+					var month = 1;
+					var year = parseInt(year) + 1;
+				};
+			}else{
+				var month = parseInt(datsplit[1]) - 1;
+				if(month == '0'){
+					var month = 12;
+					var year = parseInt(year) - 1;
+				};
+			};
+			console.log(month);
+			getpie(year + '-' + addzero(month));
+		};
+		function getpie(datum){
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
-			var nudat = getDate().datum;
+			if(!datum){
+				var nudat = getDate().datum;
+			}else{
+				var nudat = datum + '-01';
+			};
 			socket.emit('getpie', {"vgrid": vgrid, "datum": nudat});
 			showhide('projekt', 'statistik');
 		};
 		socket.on('sendpie', function(respons) {
+			console.log(respons);
+			var piedatum = document.getElementById('piedatum');
+				removechilds(piedatum);
+				var piedatumtext = document.createTextNode(addzero(respons.datum));
+				piedatum.appendChild(piedatumtext);
 			chartData = [config.statistikhead];
 			for (var i = respons.data.length - 1; i >= 0; i--) {
 				chartData.push([findprojektnamn(respons.data[i].id), respons.data[i].val])
@@ -1180,7 +1243,7 @@
 				legend:{alignment: 'center'}
 			};
 			var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-			chart.draw(data, options);
+				chart.draw(data, options);
 		};
 		function tillbakafranstatistik(){
 			var body = document.getElementsByTagName('body')[0].removeAttribute('onresize');

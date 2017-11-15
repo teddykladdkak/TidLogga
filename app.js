@@ -395,7 +395,7 @@ io.sockets.on('connection', function (socket, username) {
 				datatosend.push({"id": userinfo.projekt[i], "val": 0});
 			};
 		};
-		socket.emit('sendpie', {"data": datatosend, "manad": data.manad, "sammanlagt": sammanlagt});
+		socket.emit('sendpie', {"data": datatosend, "manad": data.manad, "sammanlagt": sammanlagt, "datum": datumsplit[0] + '-' + datumsplit[1]});
 	});
 });
 //Kollar IP adress för server.
