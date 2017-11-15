@@ -216,6 +216,13 @@
 			};
 			return false;
 		};
+		function findprojektnamn(id){
+			for (var i = config.projektarray.length - 1; i >= 0; i--) {
+				if(config.projektarray[i].id == id){
+					return config.projektarray[i].namn;
+				};
+			};
+		};
 	</script>
 	<style type="text/css">
 		#header {
@@ -285,9 +292,6 @@
 		#skrivutpapper table td{
 			vertical-align: middle;
 		}
-		/*#skrivutpapper table tbody tr:nth-child(0), #skrivutpapper table tr:nth-child(1){
-			text-align: left;
-		}*/
 		@media print { 
 			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin{
 				display: none;
@@ -390,7 +394,12 @@
 			for (var a = 0; a < responsdata.projekt.length; a++){
 				var option = document.createElement('option');
 					option.setAttribute('value', responsdata.projekt[a]);
-					var optiontext = document.createTextNode(config.projekt[responsdata.projekt[a]].namn);
+					var optiontext = document.createTextNode(findprojektnamn(responsdata.projekt[a]));
+					for (var b = responsdata.activeprojekt.length - 1; b >= 0; b--) {
+						if(responsdata.activeprojekt[b] == responsdata.projekt[a]){
+							var optiontext = document.createTextNode('* ' + findprojektnamn(responsdata.projekt[a]));
+						};
+					};
 					option.appendChild(optiontext);
 				listaprojekt.appendChild(option);
 			};
@@ -407,7 +416,6 @@
 		});
 		socket.on('loggoutuser', function(vgrid) {
 			var sessionvgrid = document.getElementById('tid').getAttribute('data-vgrid');
-			console.log();
 			if(!sessionvgrid){}else{
 				if(sessionvgrid == vgrid){
 					location.reload();
@@ -418,7 +426,6 @@
 			socket.emit('startadmin', vgrid);
 		};
 		socket.on('admininfo', function(respons) {
-			console.log(respons);
 			var adminwrapper = document.getElementById('admin');
 				var admintable = document.createElement('table');
 					var adminhead = document.createElement('thead');
@@ -480,7 +487,6 @@
 					nyausers.push(userarray);
 				};
 			};
-			console.log(nyausers);
 			socket.emit('uppdaterausers', {"vgrid": vgrid, "nyausers": nyausers});
 			avbrytadmin();
 		};
@@ -495,7 +501,6 @@
 			newadminuser(tbody, blankuser);
 		};
 		function newadminuser(element, user){
-			console.log(user);
 			var line = document.createElement('tr');
 			var textsegment = ['namn', 'vgrid'];
 			for (var i = 0; i < textsegment.length; i++){
@@ -547,7 +552,7 @@
 				tidraknare.setAttribute('data-projektid', responsdata.projekt);
 				var projektnamn = document.getElementById('projektnamn');
 					removechilds(projektnamn);
-					var projektnamntext = document.createTextNode(config.projekt[responsdata.projekt].namn);
+					var projektnamntext = document.createTextNode(findprojektnamn(responsdata.projekt));
 					projektnamn.appendChild(projektnamntext);
 				showhide('none', 'projektnamn');
 				showhide('projekt', 'klocka');
@@ -589,6 +594,14 @@
 				tidwrapper.appendChild(tidwrappertext);
 			var tidraknare = document.getElementById('tid');
 				tidraknare.setAttribute('data-milisec', inklockdata.datum.milisec);
+			var listaprojekt = document.getElementById('listaprojekt').getElementsByTagName('option');
+			for (var i = listaprojekt.length - 1; i >= 0; i--) {
+				if(listaprojekt[i].getAttribute('value') == tidraknare.getAttribute('data-projektid')){
+					removechilds(listaprojekt[i]);
+					var nyoption = document.createTextNode('* ' + findprojektnamn(tidraknare.getAttribute('data-projektid')));
+					listaprojekt[i].appendChild(nyoption);
+				};
+			};
 			clearInterval(countinterval);
 			startcount();
 			countinterval = setInterval(function(){ startcount(); }, 1000);
@@ -627,7 +640,14 @@
 				removechilds(tidwrapper);
 				var tidtext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
 				tidwrapper.appendChild(tidtext);
-			console.log(time);
+			var listaprojekt = document.getElementById('listaprojekt').getElementsByTagName('option');
+			for (var i = listaprojekt.length - 1; i >= 0; i--) {
+				if(listaprojekt[i].getAttribute('value') == tidwrapper.getAttribute('data-projektid')){
+					removechilds(listaprojekt[i]);
+					var nyoption = document.createTextNode(findprojektnamn(tidwrapper.getAttribute('data-projektid')));
+					listaprojekt[i].appendChild(nyoption);
+				};
+			};
 			enablebuttons('in');
 			disablebuttons('ut');
 		});
@@ -653,7 +673,7 @@
 			if(!loggdata.mothtoload){}else{
 				var projektnamn = document.getElementById('projektnamn');
 					removechilds(projektnamn);
-					var projektnamntext = document.createTextNode(config.projekt[loggdata.projekt].namn);
+					var projektnamntext = document.createTextNode(findprojektnamn(loggdata.projekt));
 					projektnamn.appendChild(projektnamntext);
 				showhide('none', 'projektnamn');
 				var loggwrapper = document.getElementById('loggwrapper');
@@ -833,7 +853,7 @@
 							input.checked = true;
 						span.appendChild(input);
 						var lable = document.createElement('lable');
-							var labletext = document.createTextNode(config.projekt[data.responsdata[a]].namn);
+							var labletext = document.createTextNode(findprojektnamn(data.responsdata[a]));
 							lable.appendChild(labletext);
 						span.appendChild(lable);
 					checkboxwrapper.appendChild(span);
@@ -956,7 +976,7 @@
 					var projekttd = document.createElement('td');
 						projekttd.setAttribute('rowspan', '1');
 						projekttd.setAttribute('class', 'projektnamn');
-						var projekttdtext = document.createTextNode(config.projekt[projektid].namn);
+						var projekttdtext = document.createTextNode(findprojektnamn(projektid));
 						projekttd.appendChild(projekttdtext);
 					tr.appendChild(projekttd);
 				}else{

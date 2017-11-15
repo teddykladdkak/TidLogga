@@ -107,45 +107,67 @@ io.sockets.on('connection', function (socket, username) {
 	// When the client connects, they are sent a message
 	socket.emit('message', 'You are connected!');
 	socket.on('checkuser', function (vgrid) {
-		var finns = false;
-		var allusers = global['allusers'];
-		for (var i = allusers.length - 1; i >= 0; i--) {
-			if(vgrid == allusers[i].vgrid){
-				var finns = allusers[i];
-			};
-		};
+		var finns = checkuser(vgrid, false);
 		if(!finns){
 			socket.emit('erroranvandare', 'Användare kunde inte hittas: ' + vgrid);
 		}else{
 			for (var i = finns.projekt.length - 1; i >= 0; i--) {
 				makedirektory(finns.projekt[i], finns.vgrid);
 			};
+			finns.activeprojekt = checkactive(vgrid);
 			socket.emit('anvandare', finns);
 			socket.broadcast.emit('loggoutuser', finns.vgrid);
 		};
 	});
 	
 	socket.on('startadmin', function (vgrid) {
-		console.log('Admin startar...');
-		var finns = checkadmin(vgrid);
+		var finns = checkuser(vgrid, true);
 		var allusers = global['allusers'];
 		if(!finns){}else{
 			socket.emit('admininfo', {"vgrid": vgrid, "data": allusers});
 		};
 	});
-	function checkadmin(vgrid){
+	function checkuser(vgrid, admin){
 		var finns = false;
 		var allusers = global['allusers'];
 		for (var i = allusers.length - 1; i >= 0; i--) {
 			if(vgrid == allusers[i].vgrid){
-				var finns = allusers[i].admin;
+				if(admin){
+					var finns = allusers[i].admin;
+				}else{
+					var finns = allusers[i];
+				};
+				checkactive(vgrid);
 			};
 		};
-		console.log(finns);
 		return finns;
 	};
+	function addzero(number){if(number <= 9){return "0" + number;}else{return number;};};
+	function checkactive(vgrid){
+		var allusers = global['allusers'];
+		var activeprojekt = [];
+		for (var i = allusers.length - 1; i >= 0; i--) {
+			if(vgrid == allusers[i].vgrid){
+				for (var a = allusers[i].projekt.length - 1; a >= 0; a--) {
+					var date = new Date();
+						var y = date.getFullYear();
+						var m = date.getMonth() + 1;
+					var file = 'users/' + vgrid + '/' + allusers[i].projekt[a] + '/' + y + '-' + addzero(m) + '.json';
+					if (fs.existsSync(file)) {
+						var data = JSON.parse(fs.readFileSync(file, 'utf8'));
+						for (var b = data.data.length - 1; b >= 0; b--) {
+							if(!data.data[b].ut){
+								activeprojekt.push(allusers[i].projekt[a]);
+							};
+						};
+					};
+				};
+			};
+		};
+		return activeprojekt;
+	};
 	socket.on('uppdaterausers', function (askdata) {
-		var finns = checkadmin(askdata.vgrid);
+		var finns = checkuser(askdata.vgrid, true);
 		if(!finns){}else{
 			var tosave = {"data": askdata.nyausers};
 			fs.writeFile(config.location.users, JSON.stringify(tosave, null, ' '), (err) => {
@@ -196,7 +218,7 @@ io.sockets.on('connection', function (socket, username) {
 					askdata.mothtoload = prittydates;
 					socket.emit('sendlogg', askdata);
 				};
-			}
+			};
 		});
 	});
 	socket.on('removesegment', function (removedata) {

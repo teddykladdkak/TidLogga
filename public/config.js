@@ -57,50 +57,6 @@ var config = {
 		id: 'piller',
 		namn: 'Pillerräknaren'
 	}],
-	projekt: {
-		dw: {
-			namn: 'Digital Whiteboard'
-		},
-		mat: {
-			namn: 'MatAppen'
-		},
-		res: {
-			namn: 'Resor'
-		},
-		utb: {
-			namn: 'Utbildning/Föreläsning'
-		},
-		sam: {
-			namn: 'Sammordning'
-		},
-		patplatt: {
-			namn: 'Vinnova Patientplatta'
-		},
-		person: {
-			namn: 'Personallista'
-		},
-		kog: {
-			namn: 'Kom & Gå'
-		},
-		kcal: {
-			namn: 'Kaloriräknare'
-		},
-		slut: {
-			namn: 'Slutanteckning'
-		},
-		vtsk: {
-			namn: 'Vätskelista'
-		},
-		remiss: {
-			namn: 'Remiss'
-		},
-		utskriv: {
-			namn: 'Utskrivning'
-		},
-		piller: {
-			namn: 'Pillerräknaren'
-		}
-	},
 	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Projekt', 'Tid Månad'],
 	manader: ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'],
 	skrivutfinnsinte: ['XXXXXX', 'XX:XX', 'XX:XX', 'XX:XX:XX', 'XX:XX:XX', 'XX:XX:XX']
