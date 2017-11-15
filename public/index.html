@@ -17,6 +17,8 @@
 	<link rel="apple-touch-icon-precomposed" sizes="120x120" href="ico/icon120x120.png">
 	<link rel="apple-touch-icon-precomposed" sizes="152x152" href="ico/icon152x152.png">
 
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 	<script type="application/javascript" src="config.js"></script>
 	<script type="text/javascript">
 		function timecounter(array){
@@ -249,7 +251,7 @@
 			zoom: 1.5;
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #admin{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #admin, #statistik{
 			border: solid #000 3px;
 		}
 		#namn {
@@ -293,7 +295,7 @@
 			vertical-align: middle;
 		}
 		@media print { 
-			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin{
+			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin, #statistik{
 				display: none;
 			}
 			#skrivutpapper{
@@ -322,7 +324,7 @@
 		<select id="listaprojekt">
 			<option value="none">Välj Projekt</option>
 		</select><br/>
-		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut..." onclick="loadskrivut();">
+		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut..." onclick="loadskrivut();"><input type="button" value="Statistik" onclick="getpie();">
 	</div>
 	<div id="klocka">
 		<div id="klockadata">
@@ -363,6 +365,10 @@
 			
 	</div>
 	<div id="admin"></div>
+	<div id="statistik">
+		<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">
+		<div id="piechart"></div>
+	</div>
 	<script src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript">
 		//Tar server id enbart för att koppla till socket
@@ -1104,6 +1110,37 @@
 			    a.setAttribute('href', data_type + ', ' + table_html);
 			    a.setAttribute('download', "Tidrapport " + manad + ".xls");
 			    a.click();
+		};
+		var chartData = [];
+		function getpie(){
+			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
+			var nudat = getDate().datum;
+			socket.emit('getpie', {"vgrid": vgrid, "datum": nudat});
+			showhide('projekt', 'statistik');
+		};
+		socket.on('sendpie', function(respons) {
+			chartData = [config.statistikhead];
+			for (var i = respons.data.length - 1; i >= 0; i--) {
+				chartData.push([findprojektnamn(respons.data[i].id), respons.data[i].val])
+			};
+			google.charts.load('current', {'packages':['corechart']});
+			google.charts.setOnLoadCallback(drawChart);
+			var body = document.getElementsByTagName('body')[0].setAttribute('onresize', "drawChart();");
+		});
+		function drawChart(){
+			var data = google.visualization.arrayToDataTable(chartData);
+			var options = {
+				chartArea:{left:0,top:0,width:'100%',height:'100%'},
+				legend:{alignment: 'center'}
+			};
+			var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+			chart.draw(data, options);
+		};
+		function tillbakafranstatistik(){
+			var body = document.getElementsByTagName('body')[0].removeAttribute('onresize');
+			removechilds(document.getElementById('piechart'));
+			chartData = [];
+			showhide('statistik', 'projekt');
 		};
 	</script>
 	<a href="" id="printlink" style="visibility: hidden;"></a>

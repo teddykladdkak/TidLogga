@@ -373,6 +373,28 @@ io.sockets.on('connection', function (socket, username) {
 		};
 		socket.emit('skrivutinfo', {"data": datatosend, "todo": data.todo, "manad": data.manad});
 	});
+	socket.on('getpie', function(data) {
+		var userinfo = checkuser(data.vgrid, false);
+		var datatosend = [];
+		var sammanlagt = 0;
+		for (var i = userinfo.projekt.length - 1; i >= 0; i--) {
+			var datumsplit = data.datum.split('-')
+			var file = 'users/' + data.vgrid + '/' + userinfo.projekt[i] + '/' + datumsplit[0] + '-' + datumsplit[1] + '.json';
+			if (fs.existsSync(file)) {
+				var valuetosend = 0;
+				var klockningar = JSON.parse(fs.readFileSync(file, 'utf8')).data;
+				for (var a = klockningar.length - 1; a >= 0; a--) {
+					var count = parseInt(klockningar[a].ut.milisec) - parseInt(klockningar[a].in.milisec);
+					var valuetosend = valuetosend + count;
+				};
+				var sammanlagt = sammanlagt + valuetosend;
+				datatosend.push({"id": userinfo.projekt[i], "val": valuetosend});
+			}else{
+				datatosend.push({"id": userinfo.projekt[i], "val": 0});
+			};
+		};
+		socket.emit('sendpie', {"data": datatosend, "manad": data.manad, "sammanlagt": sammanlagt});
+	});
 });
 //Kollar IP adress för server.
 function getIPAddress() {
