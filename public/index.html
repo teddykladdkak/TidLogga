@@ -18,6 +18,7 @@
 	<link rel="apple-touch-icon-precomposed" sizes="152x152" href="ico/icon152x152.png">
 
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<link rel="stylesheet" href="font-awesome/css/font-awesome.css">
 
 	<script type="application/javascript" src="config.js"></script>
 	<script type="text/javascript">
@@ -249,6 +250,8 @@
 		}
 		input, select, #klockadata, p {
 			zoom: 1.5;
+		}
+		i, input, select, #klockadata, p {
 			margin: 5px;
 		}
 		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #admin, #statistik{
@@ -317,30 +320,32 @@
 	</div>
 	<div id="login">
 		<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
-		<input type="button" value="Logga In" id="loginbutton" onclick="loggain();"><br/>
+		<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i>
+		<!--<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">--><br/>
 		<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
+		<!--<i class="fa fa-camera-retro fa-5x"></i>-->
 	</div>
 	<div id="projekt">
 		<select id="listaprojekt">
 			<option value="none">Välj Projekt</option>
 		</select><br/>
-		<input type="button" value="Klocka" onclick="valjprojekt();"><input type="button" value="Logg" onclick="getlogg();"><input type="button" value="Skriv ut..." onclick="loadskrivut();"><input type="button" value="Statistik" onclick="getpie();">
+		<i class="fa fa-clock-o fa-4x" aria-hidden="true" onclick="valjprojekt();"></i>
+		<!--<input type="button" value="Klocka" onclick="valjprojekt();">-->
+		<i class="fa fa-list fa-4x" aria-hidden="true" onclick="getlogg();"></i>
+		<!--<input type="button" value="Logg" onclick="getlogg();">-->
+		<i class="fa fa-print fa-4x" aria-hidden="true" onclick="loadskrivut();"></i>
+		<!--<input type="button" value="Skriv ut..." onclick="loadskrivut();">-->
+		<i class="fa fa-pie-chart fa-4x" aria-hidden="true" onclick="getpie();"></i>
+		<!--<input type="button" value="Statistik" onclick="getpie();">-->
 	</div>
 	<div id="klocka">
+		<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakatillprojekt();"></i>
+		<!--<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">-->
 		<div id="klockadata">
 			<span id="intid">XX:XX</span> <span id="tid">XX:XX:XX</span>
 		</div>
-		<input type="button" value="Klocka in" class="in" onclick="startclock('nu')"><input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');">
-		<div class="table">
-			<div class="tr">
-				<div class="td">
-					<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');"><input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">
-				</div>
-				<div class="td">
-					<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">
-				</div>
-			</div>
-		</div>
+		<input type="button" value="Klocka in" class="in" onclick="startclock('nu')"><input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');"><br/>
+		<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');"><input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">
 	</div>
 	<div id="klockaannantid">
 		<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
@@ -366,7 +371,8 @@
 	</div>
 	<div id="admin"></div>
 	<div id="statistik">
-		<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">
+		<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakafranstatistik();"></i>
+		<!--<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">-->
 		<div id="piechart"></div>
 	</div>
 	<script src="/socket.io/socket.io.js"></script>
@@ -411,11 +417,17 @@
 			};
 			if(responsdata.admin){
 				var projektwrapper = document.getElementById('projekt');
-					var adminbutton = document.createElement('input');
+					//<i class="fa fa-user-plus" aria-hidden="true"></i>
+					var adminbutton = document.createElement('i');
+						adminbutton.setAttribute('class', 'fa fa-user-plus fa-4x');
+						adminbutton.setAttribute('aria-hidden', 'true');
+						adminbutton.setAttribute('onclick', 'admin("' + responsdata.vgrid + '");');
+					projektwrapper.appendChild(adminbutton);
+					/*var adminbutton = document.createElement('input');
 						adminbutton.setAttribute('value', 'Admin');
 						adminbutton.setAttribute('type', 'button');
 						adminbutton.setAttribute('onclick', 'admin("' + responsdata.vgrid + '");');
-					projektwrapper.appendChild(adminbutton);
+					projektwrapper.appendChild(adminbutton);*/
 			};
 			showhide('none', 'namn');
 			showhide('login', 'projekt');
@@ -683,11 +695,17 @@
 					projektnamn.appendChild(projektnamntext);
 				showhide('none', 'projektnamn');
 				var loggwrapper = document.getElementById('loggwrapper');
-					var tillbaka = document.createElement('input');
+					var tillbaka = document.createElement('i');
+						tillbaka.setAttribute('class', 'fa fa-arrow-circle-left fa-3x');
+						tillbaka.setAttribute('value', 'Tillbaka');
+						tillbaka.setAttribute('aria-hidden', 'true');
+						tillbaka.setAttribute('onclick', 'backfromlogg();');
+					loggwrapper.appendChild(tillbaka);
+					/*var tillbaka = document.createElement('input');
 						tillbaka.setAttribute('type', 'button');
 						tillbaka.setAttribute('value', 'Tillbaka');
 						tillbaka.setAttribute('onclick', 'backfromlogg();');
-					loggwrapper.appendChild(tillbaka);
+					loggwrapper.appendChild(tillbaka);*/
 				var month = document.createElement('select');
 					month.setAttribute('onchange', 'loggandramanad(this);');
 				for (var a = loggdata.mothtoload.length - 1; a >= 0; a--) {
@@ -747,19 +765,31 @@
 				};
 				line.appendChild(totaltid);
 				var remove = document.createElement('td');
-					var removeinput = document.createElement('img');
+					//<i class="fa fa-trash" aria-hidden="true"></i>
+					var removeinput = document.createElement('i');
+						removeinput.setAttribute('class', 'fa fa-trash fa-3x');
+						removeinput.setAttribute('aria-hidden', 'true');
+						removeinput.setAttribute('onclick', 'removesegment(this);');
+					remove.appendChild(removeinput);
+					/*var removeinput = document.createElement('img');
 						removeinput.setAttribute('src', 'img/trash.png');
 						removeinput.setAttribute('value', 'Ta bort');
 						removeinput.setAttribute('class', 'loggbutton');
 						removeinput.setAttribute('onclick', 'removesegment(this);');
-					remove.appendChild(removeinput);
+					remove.appendChild(removeinput);*/
 					if(!loggdata.ut){}else{
-						var editinput = document.createElement('img');
+						//<i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+						var editinput = document.createElement('i');
+							editinput.setAttribute('class', 'fa fa-pencil-square-o fa-3x');
+							editinput.setAttribute('aria-hidden', 'true');
+							editinput.setAttribute('onclick', 'showedit(this);');
+						remove.appendChild(editinput);
+						/*var editinput = document.createElement('img');
 							editinput.setAttribute('src', 'img/edit.png');
 							editinput.setAttribute('value', 'Edit');
 							editinput.setAttribute('class', 'loggbutton');
 							editinput.setAttribute('onclick', 'showedit(this);');
-						remove.appendChild(editinput);
+						remove.appendChild(editinput);*/
 					};
 				line.appendChild(remove);
 			tableelem.appendChild(line);
@@ -842,11 +872,16 @@
 		};
 		socket.on('responsfilestoload', function(data) {
 			var skrivutwrapper = document.getElementById('skrivut');
-				var tillbaka = document.createElement('input');
+				var tillbaka = document.createElement('i');
+					tillbaka.setAttribute('class', 'fa fa-arrow-circle-left fa-3x');
+					tillbaka.setAttribute('aria-hidden', 'true');
+					tillbaka.setAttribute('onclick', 'showhide("skrivut", "projekt");');
+				skrivutwrapper.appendChild(tillbaka);
+				/*var tillbaka = document.createElement('input');
 					tillbaka.setAttribute('type', 'button');
 					tillbaka.setAttribute('value', 'Tillbaka');
 					tillbaka.setAttribute('onclick', 'showhide("skrivut", "projekt");');
-				skrivutwrapper.appendChild(tillbaka);
+				skrivutwrapper.appendChild(tillbaka);*/
 				//addbrake(skrivutwrapper);
 				var checkboxwrapper = document.createElement('div');
 					checkboxwrapper.setAttribute('id', 'printcheckboxes');
@@ -869,16 +904,27 @@
 				var select = document.createElement('select');
 					select.setAttribute('id', 'skrivutdatum');
 				skrivutwrapper.appendChild(select);
-				var skrivutknapp = document.createElement('input');
+				addbrake(skrivutwrapper);
+				var skrivutknapp = document.createElement('i');
+					skrivutknapp.setAttribute('class', 'fa fa-print fa-3x');
+					skrivutknapp.setAttribute('aria-hidden', 'true');
+					skrivutknapp.setAttribute('onclick', 'startprint("print");');
+				skrivutwrapper.appendChild(skrivutknapp);
+				/*var skrivutknapp = document.createElement('input');
 					skrivutknapp.setAttribute('type', 'button');
 					skrivutknapp.setAttribute('value', 'Skriv ut...');
 					skrivutknapp.setAttribute('onclick', 'startprint("print");');
-				skrivutwrapper.appendChild(skrivutknapp);
-				var excellknapp = document.createElement('input');
+				skrivutwrapper.appendChild(skrivutknapp);*/
+				var excellknapp = document.createElement('i');
+					excellknapp.setAttribute('class', 'fa fa-table fa-3x');
+					excellknapp.setAttribute('aria-hidden', 'true');
+					excellknapp.setAttribute('onclick', 'startprint("excell");');
+				skrivutwrapper.appendChild(excellknapp);
+				/*var excellknapp = document.createElement('input');
 					excellknapp.setAttribute('type', 'button');
 					excellknapp.setAttribute('value', 'Spara Excell');
 					excellknapp.setAttribute('onclick', 'startprint("excell");');
-				skrivutwrapper.appendChild(excellknapp);
+				skrivutwrapper.appendChild(excellknapp);*/
 			socket.emit('getdates', {"vgrid": data.vgrid, "responsdata": data.responsdata});
 			showhide('projekt', 'skrivut');
 		});
