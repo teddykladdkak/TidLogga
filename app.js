@@ -384,8 +384,10 @@ io.sockets.on('connection', function (socket, username) {
 				var valuetosend = 0;
 				var klockningar = JSON.parse(fs.readFileSync(file, 'utf8')).data;
 				for (var a = klockningar.length - 1; a >= 0; a--) {
-					var count = parseInt(klockningar[a].ut.milisec) - parseInt(klockningar[a].in.milisec);
-					var valuetosend = valuetosend + count;
+					if(!klockningar[a].ut){}else{
+						var count = parseInt(klockningar[a].ut.milisec) - parseInt(klockningar[a].in.milisec);
+						var valuetosend = valuetosend + count;
+					};
 				};
 				var sammanlagt = sammanlagt + valuetosend;
 				datatosend.push({"id": userinfo.projekt[i], "val": valuetosend});
