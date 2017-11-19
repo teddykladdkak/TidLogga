@@ -277,7 +277,7 @@
 		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #statistik{
 			border: solid #000 3px;
 		}
-		#loggwrapper table{
+		#loggwrapper table, #detaljtable{
 			margin: 5px 10px 10px 10px;
 		}
 		.checkboxwrapper{
@@ -287,7 +287,7 @@
 		#loggwrapper table{
 			margin-bottom: 10px;
 		}
-		#loggwrapper table, #loggwrapper table td, #skrivutpapper table, #skrivutpapper table td, #admin table, #admin table td{
+		#loggwrapper table, #loggwrapper table td, #skrivutpapper table, #skrivutpapper table td, #admin table, #admin table td, #detaljtable, #detaljtable td{
 			border-collapse: collapse;
 			border: solid 2px #000;
 		}
@@ -476,6 +476,11 @@
 						<td id="piedatum">XXXX-XX</td>
 						<td><i class="fa fa-chevron-right fa-3x" aria-hidden="true" onclick="nextpie('+')"></i></td>
 					</tr>
+				</table>
+			</div>
+			<div id="detalj" class="center">
+				<table id="detaljtable">
+					
 				</table>
 			</div>
 		</div>
@@ -1351,13 +1356,47 @@
 		};
 		socket.on('sendpie', function(respons) {
 			console.log(respons);
+			var detaljtable = document.getElementById('detaljtable');
+				removechilds(detaljtable);
 			var piedatum = document.getElementById('piedatum');
 				removechilds(piedatum);
 				var piedatumtext = document.createTextNode(addzero(respons.datum));
 				piedatum.appendChild(piedatumtext);
 			chartData = [config.statistikhead];
+			var sammanlagtmillisec = 0;
 			for (var i = respons.data.length - 1; i >= 0; i--) {
-				chartData.push([findprojektnamn(respons.data[i].id), respons.data[i].val])
+				var projektnamn = findprojektnamn(respons.data[i].id);
+				var time = timebetween('', '', respons.data[i].val);
+
+				chartData.push([projektnamn, respons.data[i].val]);
+
+				var sammanlagtmillisec = sammanlagtmillisec + parseInt(respons.data[i].val);
+
+				var line = document.createElement('tr');
+					var tdnamn = document.createElement('td');
+						var tdnamntext = document.createTextNode(projektnamn);
+						tdnamn.appendChild(tdnamntext);
+					line.appendChild(tdnamn);
+					var tdval = document.createElement('td');
+					if(respons.data[i].val == 0){
+						var tdvaltext = document.createTextNode('00:00:00');
+					}else{
+						var tdvaltext = document.createTextNode(addzero(time.t) + ':' + addzero(time.m) + ':' + addzero(time.s));
+					};
+						tdval.appendChild(tdvaltext);
+					line.appendChild(tdval);
+				detaljtable.appendChild(line);
+			};
+			if(sammanlagtmillisec == 0){}else{
+				var trsammanlagt = document.createElement('tr');
+					var tdsammanlagt = document.createElement('td');
+						tdsammanlagt.setAttribute('colspan', '2');
+						tdsammanlagt.setAttribute('style', 'font-weight: bold;text-align: center;');
+						var samtime = timebetween('', '', sammanlagtmillisec);
+						var tdsammanlagttext = document.createTextNode(addzero(samtime.t) + ':' + addzero(samtime.m) + ':' + addzero(samtime.s));
+						tdsammanlagt.appendChild(tdsammanlagttext);
+					trsammanlagt.appendChild(tdsammanlagt);
+				detaljtable.appendChild(trsammanlagt);
 			};
 			google.charts.load('current', {'packages':['corechart']});
 			google.charts.setOnLoadCallback(drawChart);
