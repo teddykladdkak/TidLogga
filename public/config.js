@@ -56,6 +56,9 @@ var config = {
 	}, {
 		id: 'piller',
 		namn: 'Pillerräknaren'
+	}, {
+		id: 'dagbok',
+		namn: 'Patient Dagbok'
 	}],
 	forklaringar: ['Projekt', 'Datum', 'Tid In', 'Tid Ut', 'Tid Pass', 'Tid Dag', 'Tid Projekt', 'Tid Månad'],
 	manader: ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'],
