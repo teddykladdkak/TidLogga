@@ -57,15 +57,19 @@
 			document.getElementById('loader').setAttribute('style', 'display: none;');
 			document.getElementById('overlay').setAttribute('style', 'display: none;');
 		};
+		function selectinput(id){
+			var input = document.getElementById(id);
+				input.focus();
+				input.select();
+				input.setSelectionRange(0,9999);
+		};
 		function load(){
-			var logininput = document.getElementById('idnamn');
-				logininput.focus();
-				logininput.select();
 			for (var i = 0; i < config.elemtohide.length; i++){
 				document.getElementById(config.elemtohide[i]).setAttribute('style', 'display: none;');
 			};
-			hideload();
 			document.getElementById('wrapper').removeAttribute('style');
+			selectinput('idnamn');
+			hideload();
 		};
 		function removechilds(parent){while (parent.hasChildNodes()) {parent.removeChild(parent.firstChild);};};
 		function showhide(hide, show){if(hide == 'none'){}else{document.getElementById(hide).setAttribute('style', 'display: none;');};if(show == 'none'){}else{document.getElementById(show).removeAttribute('style');};};
@@ -375,6 +379,16 @@
 			}
 			#loggwrapper table tbody td{
 				padding: 5px;
+			}
+		}
+		@media screen and (max-width: 500px) {
+			#idnamn{
+				zoom: 3;
+				width: 88%;
+				margin-right: 0px;
+				margin-left: 0px;
+				padding-right: 0px;
+				padding-left: 0px;
 			}
 		}
 		@media print { 
@@ -1249,7 +1263,7 @@
 		socket.on('skrivutinfo', function(respons) {
 			for (var i = respons.data.length - 1; i >= 0; i--) {
 				if(respons.data[i].data == 'none'){
-					addskrivutline(respons.data[i].id, config.skrivutfinnsinte);
+					//addskrivutline(respons.data[i].id, config.skrivutfinnsinte);
 				}else if(respons.data[i].data.length == 0){
 					addskrivutline(respons.data[i].id, config.skrivutfinnsinte);
 				}else{
