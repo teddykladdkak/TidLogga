@@ -13,7 +13,7 @@ var config = {
 		infonetw:'Nätverket',
 		infoturnoff: 'Stäng av server med "CTRL+C"'
 	},
-	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper', 'admin', 'statistik'],
+	elemtohide: ['namn', 'projektnamn', 'projekt', 'klocka', 'klockaannantid', 'loggwrapper', 'loggedit', 'skrivut', 'skrivutpapper', 'admin', 'statistik', 'pengar'],
 	projektarray: [{
 		id: 'dw',
 		namn: 'Digital Whiteboard'

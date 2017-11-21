@@ -175,6 +175,7 @@ io.sockets.on('connection', function (socket, username) {
 					console.log('Något gick fel i skapandet av ny fil.')
 				}else{
 					loadusers();
+					socket.emit('usersupdated', 'ok');
 				};
 			});
 		};
@@ -396,6 +397,30 @@ io.sockets.on('connection', function (socket, username) {
 			};
 		};
 		socket.emit('sendpie', {"data": datatosend, "manad": data.manad, "sammanlagt": sammanlagt, "datum": datumsplit[0] + '-' + datumsplit[1]});
+	});
+
+	socket.on('klockainochut', function (inochut) {
+		var datsplit = inochut.data.in.datum.split('-');
+		var file = 'users/' + inochut.vgrid + '/' + inochut.projektid + '/' + datsplit[0] + '-' + datsplit[1] + '.json';
+		fs.readFile(file, (err, data) => {
+			if (err){
+				var nydata = {};
+					nydata.data = [inochut.data];
+				fs.writeFile(file, JSON.stringify(nydata, null, ' '), (err) => {
+					socket.emit('stopklocka', {"datum": inochut.data.ut});
+				});
+			}else{
+				var gammaldata = JSON.parse(data);
+					gammaldata.data.push(inochut.data);
+				fs.writeFile(file, JSON.stringify(gammaldata, null, ' '), (err) => {
+					if (err){
+						console.log('Något gick fel i skapandet av ny fil.')
+					}else{
+						socket.emit('stopklocka', {"datum": inochut.data.ut});
+					};
+				});
+			};
+		});
 	});
 });
 //Kollar IP adress för server.

@@ -49,6 +49,14 @@
 			};
 			return countarray;
 		};
+		function showload(){
+			document.getElementById('loader').removeAttribute('style');
+			document.getElementById('overlay').removeAttribute('style');
+		};
+		function hideload(){
+			document.getElementById('loader').setAttribute('style', 'display: none;');
+			document.getElementById('overlay').setAttribute('style', 'display: none;');
+		};
 		function load(){
 			var logininput = document.getElementById('idnamn');
 				logininput.focus();
@@ -56,6 +64,8 @@
 			for (var i = 0; i < config.elemtohide.length; i++){
 				document.getElementById(config.elemtohide[i]).setAttribute('style', 'display: none;');
 			};
+			hideload();
+			document.getElementById('wrapper').removeAttribute('style');
 		};
 		function removechilds(parent){while (parent.hasChildNodes()) {parent.removeChild(parent.firstChild);};};
 		function showhide(hide, show){if(hide == 'none'){}else{document.getElementById(hide).setAttribute('style', 'display: none;');};if(show == 'none'){}else{document.getElementById(show).removeAttribute('style');};};
@@ -274,7 +284,7 @@
 		i, input, select, #klockadata, p {
 			margin: 5px;
 		}
-		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #statistik{
+		#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #statistik, #pengar{
 			border: solid #000 3px;
 		}
 		#loggwrapper table, #detaljtable{
@@ -368,7 +378,7 @@
 			}
 		}
 		@media print { 
-			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin, #statistik{
+			#login, #projekt, #klocka, #klockaannantid, #loggwrapper, #loggedit, #skrivut, #namn, #projektnamn, #head, #admin, #statistik, #pengar, #loader, #overlay{
 				display: none;
 			}
 			#skrivutpapper{
@@ -387,10 +397,56 @@
 		#klockadata{
 			text-align: center;
 		}
+		.fa-money{
+			-webkit-transform: rotate(-20deg);
+			-moz-transform: rotate(-20deg);
+			-ms-transform: rotate(-20deg);
+			-o-transform: rotate(-20deg);
+			filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2.2);
+		}
+
+		#loader {
+		  position: absolute;
+		  left: 50%;
+		  top: 50%;
+		  z-index:1002;
+		  width: 150px;
+		  height: 150px;
+		  margin: -75px 0 0 -75px;
+		  border: 16px solid #f3f3f3;
+		  border-radius: 50%;
+		  border-top: 16px solid #3498db;
+		  width: 120px;
+		  height: 120px;
+		  -webkit-animation: spin 2s linear infinite;
+		  animation: spin 2s linear infinite;
+		}
+
+		@-webkit-keyframes spin {
+		  0% { -webkit-transform: rotate(0deg); }
+		  100% { -webkit-transform: rotate(360deg); }
+		}
+
+		@keyframes spin {
+		  0% { transform: rotate(0deg); }
+		  100% { transform: rotate(360deg); }
+		}
+		#overlay {
+		    position:fixed;
+		    top:0;
+		    bottom:0;
+		    left:0;
+		    right:0;
+		    background-color:#fff;
+		    opacity:0.8;
+		    z-index:1001;
+		}
 	</style>
 </head>
 <body onload="load();">
-	<div id="wrapper">
+	<div id="overlay"></div>
+	<div id="loader"></div>
+	<div id="wrapper" style="display: none;">
 		<div id="head">TidLogga</div>
 		<div id="header" class="table">
 			<div class="tr">
@@ -432,7 +488,7 @@
 				<i class="fa fa-stop fa-3x ut enable" aria-hidden="true" onclick="stopclock('nu');"></i>
 				<!--<input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');">-->
 				</div>
-				<p>Annan tid: <span class="checkboxwrapper"><i class="fa fa-play in enable" aria-hidden="true" onclick="annantid('in')"></i><i class="fa fa-stop ut enable" aria-hidden="true" onclick="annantid('ut');""></i></span></p>
+				<p>Annan tid: <span class="checkboxwrapper"><i class="fa fa-play in enable" aria-hidden="true" onclick="annantid('in')"></i><i class="fa fa-stop ut enable" aria-hidden="true" onclick="annantid('ut');""></i></span><i class="fa fa-money" aria-hidden="true" onclick="showpengar();"></i></p>
 				<!--<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');">
 				<input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">-->
 		</div>
@@ -484,6 +540,14 @@
 				</table>
 			</div>
 		</div>
+		<div id="pengar">
+			<p>Timlön:</p>
+			<label><input type="number" id="timlon" value="0"> kr/h</label>
+			<p>Kronor att registrera</p>
+			<label><input type="number" id="pengarinput" value="0"> kr</label><br/>
+			<i class="fa fa-check-circle fa-4x" aria-hidden="true" onclick="addpengar();"></i>
+			<i class="fa fa-times-circle fa-4x" aria-hidden="true" onclick="avbrytpengar();"></i>
+		</div>
 	</div>
 	<script src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript">
@@ -496,6 +560,7 @@
 		// Visar i console log status från server
 		socket.on('message', function(message) {
 			console.log(message);
+			hideload();
 		});
 		socket.on('disconnect', function () {
 			//alert('Koppling till server ligger nere!');
@@ -503,6 +568,7 @@
 		});
 		function loggain(){
 			var nameinput = document.getElementById('idnamn').value.toLowerCase();
+			showload();
 			socket.emit('checkuser', nameinput);
 		};
 
@@ -541,6 +607,7 @@
 			};
 			showhide('none', 'namn');
 			showhide('login', 'projekt');
+			hideload();
 		});
 		socket.on('loggoutuser', function(vgrid) {
 			var sessionvgrid = document.getElementById('tid').getAttribute('data-vgrid');
@@ -549,8 +616,10 @@
 					location.reload();
 				};
 			};
+			hideload();
 		});
 		function admin(vgrid){
+			showload();
 			socket.emit('startadmin', vgrid);
 		};
 		socket.on('admininfo', function(respons) {
@@ -588,6 +657,7 @@
 					adminwrapper.appendChild(button);
 				};
 			showhide('projekt', 'admin');
+			hideload();
 		});
 		function saveusers(vgrid){
 			var allusers = document.getElementById('admin').getElementsByTagName('table')[0].getElementsByTagName('tbody')[0].getElementsByTagName('tr');
@@ -615,9 +685,13 @@
 					nyausers.push(userarray);
 				};
 			};
+			showload();
 			socket.emit('uppdaterausers', {"vgrid": vgrid, "nyausers": nyausers});
-			avbrytadmin();
 		};
+		socket.on('usersupdated', function(respons) {
+			avbrytadmin();
+			hideload();
+		});
 		function avbrytadmin(){
 			var wrapper = document.getElementById('admin');
 			removechilds(wrapper);
@@ -665,12 +739,14 @@
 		socket.on('erroranvandare', function(message) {
 			adderror('namnstatus', 'Användarnamn kunde inte hittas!');
 			console.log('Användarnamn kunde inte hittas!');
+			hideload();
 		});
 
 		function valjprojekt(){
 			var select = document.getElementById('listaprojekt');
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			if(select.value == 'none'){}else{
+				showload();
 				socket.emit('checkprojekt', {"projekt": select.value, "vgrid": vgrid, "getall": false, "checkaktiv": true});
 			};
 		};
@@ -690,6 +766,7 @@
 			}else{
 				startclock('save', responsdata.svar.milisec);
 			};
+			hideload();
 		});
 
 		function startclock(todo, startmilisec){
@@ -716,6 +793,7 @@
 			var tidraknare = document.getElementById('tid');
 			var projektid = tidraknare.getAttribute('data-projektid');
 			var vgrid = tidraknare.getAttribute('data-vgrid');
+			showload();
 			socket.emit('klockain', {"projekt": projektid, "vgrid": vgrid, "datum": datum, "save": save});
 		};
 
@@ -739,6 +817,7 @@
 			clearInterval(countinterval);
 			startcount();
 			countinterval = setInterval(function(){ startcount(); }, 1000);
+			hideload();
 		});
 
 
@@ -772,11 +851,13 @@
 				var projektid = tidraknare.getAttribute('data-projektid');
 				var startdatum = getDate('', '', tidraknare.getAttribute('data-milisec')).datum;
 				var vgrid = tidraknare.getAttribute('data-vgrid');
+				showload();
 				socket.emit('stopklocka', {"projekt": projektid, "vgrid": vgrid, "datum": datum, "startdatum": startdatum});
 			};
 		};
 
 		socket.on('stopklocka', function(inklockdata) {
+			console.log(inklockdata);
 			var tidwrapper = document.getElementById('tid');
 			var time = timebetween(tidwrapper.getAttribute('data-milisec'), inklockdata.datum.milisec, '');
 				removechilds(tidwrapper);
@@ -792,6 +873,7 @@
 			};
 			enablebuttons('in');
 			disablebuttons('ut');
+			hideload();
 		});
 
 		function getlogg(specielltdatum){
@@ -805,6 +887,7 @@
 				}else{
 					var datum = specielltdatum;
 				};
+				showload();
 				socket.emit('checkprojekt', {"projekt": select.value, "datum": datum, "vgrid": vgrid, "getall": true, "checkaktiv": false});
 			};
 		};
@@ -861,6 +944,7 @@
 					tableelem.appendChild(tbody);
 				loggwrapper.appendChild(tableelem);
 				showhide('projekt', 'loggwrapper');
+				hideload();
 			};
 		});
 		function backfromlogg(){
@@ -936,6 +1020,7 @@
 			var vgrid = element.parentElement.parentElement.getAttribute('data-vgrid');
 			var projektid = element.parentElement.parentElement.getAttribute('data-projektid');
 			var datum = getDate('', '', millisecin).datum;
+			showload();
 			socket.emit('removesegment', {"millisecin": millisecin, "millisecut": millisecut, "vgrid": vgrid, "projektid": projektid, "datum": datum});
 			var loggwrapper = document.getElementById('loggwrapper');
 				removechilds(loggwrapper);
@@ -944,6 +1029,7 @@
 			showhide('loggedit', 'loggwrapper');
 			showhide('projekt', 'loggwrapper');
 			getlogg(loggdata.datum);
+			hideload();
 		});
 		function showedit(element){
 			var wrapper = document.getElementById('loggedit');
@@ -982,6 +1068,7 @@
 					arraytosave.ny = {};
 					arraytosave.ny.in = tidin;
 					arraytosave.ny.ut = tidut;
+				showload();
 				socket.emit('editsegment', arraytosave);
 				loggeditindat.removeAttribute('style');
 				loggeditintime.removeAttribute('style');
@@ -1032,6 +1119,7 @@
 			var vgrid = document.getElementById('tid').getAttribute('data-vgrid');
 			var skrivutwrapper = document.getElementById('skrivut');
 			removechilds(skrivutwrapper);
+			showload();
 			socket.emit('getfilestoload', vgrid);
 		};
 		socket.on('responsfilestoload', function(data) {
@@ -1089,6 +1177,7 @@
 					excellknapp.setAttribute('value', 'Spara Excell');
 					excellknapp.setAttribute('onclick', 'startprint("excell");');
 				skrivutwrapper.appendChild(excellknapp);*/
+			showload();
 			socket.emit('getdates', {"vgrid": data.vgrid, "responsdata": data.responsdata});
 			showhide('projekt', 'skrivut');
 		});
@@ -1119,6 +1208,7 @@
 					option.appendChild(optiontext);
 				wrapper.appendChild(option);
 			};
+			hideload();
 		});
 		//#skrivutpapper
 		function startprint(todo){
@@ -1153,6 +1243,7 @@
 					var tbody = document.createElement('tbody');
 					table.appendChild(tbody);
 				skrivutpapper.appendChild(table);
+			showload();
 			socket.emit('getprojektinformaiton', {"vgrid": vgrid, "manad": manad, "projekttoget": projekttoget, "todo": todo});
 		};
 		socket.on('skrivutinfo', function(respons) {
@@ -1180,6 +1271,7 @@
 			}else if(respons.todo == 'excell'){
 				makeexcell(respons.manad);
 			};
+			hideload();
 		});
 		function addskrivutline(projektid, array, data){
 			
@@ -1266,16 +1358,8 @@
 				daycounttd.setAttribute('rowspan', '1');
 				daycounttd.setAttribute('class', namn);
 				daycounttd.setAttribute('data-milisec', countmilisec);
-
-
-
-
 				var time = addzero(nytime.t) + ':' + addzero(nytime.m) + ':' + addzero(nytime.s);
 				daycounttd.setAttribute('data-time', time);
-
-
-
-
 				var daycounttdtdtext = document.createTextNode(time);
 				daycounttd.appendChild(daycounttdtdtext);
 			element.appendChild(daycounttd);
@@ -1351,6 +1435,7 @@
 			}else{
 				var nudat = datum + '-01';
 			};
+			showload();
 			socket.emit('getpie', {"vgrid": vgrid, "datum": nudat});
 			showhide('projekt', 'statistik');
 		};
@@ -1410,12 +1495,49 @@
 			};
 			var chart = new google.visualization.PieChart(document.getElementById('piechart'));
 				chart.draw(data, options);
+			hideload();
 		};
 		function tillbakafranstatistik(){
 			var body = document.getElementsByTagName('body')[0].removeAttribute('onresize');
 			removechilds(document.getElementById('piechart'));
 			chartData = [];
 			showhide('statistik', 'projekt');
+		};
+		function addpengar(){
+			var timlon = document.getElementById('timlon');
+			var pengarinput = document.getElementById('pengarinput');
+			if(timlon.value == '' || pengarinput.value == '' || parseInt(timlon.value) <= 0 || parseInt(pengarinput.value) <= 0){
+//Highlighta var det är fel i formuläret
+				return false;
+			}else{
+
+			};
+			var krtomillisec = (parseInt(pengarinput.value) / parseInt(timlon.value)) * 3600000;
+			var indatum = getDate();
+			var millisecnu = indatum.milisec;
+			document.getElementById('tid').setAttribute('data-milisec', millisecnu);
+			var intid = document.getElementById('intid');
+				removechilds(intid);
+				var intidtext = document.createTextNode(indatum.tid);
+				intid.appendChild(intidtext);
+			var utdatum = getDate('', '', millisecnu + krtomillisec);
+			var infoelem = document.getElementById('tid')
+			var projektid = infoelem.getAttribute('data-projektid');
+			var vgrid = infoelem.getAttribute('data-vgrid');
+			var arraytosave = {};
+				arraytosave.in = indatum;
+				arraytosave.ut = utdatum;
+			showload();
+			socket.emit('klockainochut', {"data": arraytosave, "projektid": projektid, "vgrid": vgrid});
+			avbrytpengar();
+		};
+		function showpengar(){
+			showhide('klocka', 'pengar');
+		};
+		function avbrytpengar(){
+			document.getElementById('timlon').value = '0';
+			document.getElementById('pengarinput').value = '0';
+			showhide('pengar', 'klocka');
 		};
 	</script>
 	<a href="" id="printlink" style="visibility: hidden;"></a>
