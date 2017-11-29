@@ -69,6 +69,7 @@
 			};
 			document.getElementById('wrapper').removeAttribute('style');
 			selectinput('idnamn');
+			checksave();
 			hideload();
 		};
 		function removechilds(parent){while (parent.hasChildNodes()) {parent.removeChild(parent.firstChild);};};
@@ -242,6 +243,34 @@
 				if(config.projektarray[i].id == id){
 					return config.projektarray[i].namn;
 				};
+			};
+		};
+		function changespara(element, todo){
+			if(todo == "on"){
+				element.setAttribute('class', element.getAttribute('class').replace('off', 'on'));
+				element.setAttribute('data-state', 'on');
+				element.setAttribute('onclick', 'changespara(this, "off");');
+			}else{
+				element.setAttribute('class', element.getAttribute('class').replace('on', 'off'));
+				element.setAttribute('data-state', 'off');
+				element.setAttribute('onclick', 'changespara(this, "on");');
+			};
+		};
+		function checksave(){
+			var namn = localStorage.getItem('tidlogganamn');
+			if(!namn){}else{
+				var element = document.getElementById('sparaknapp');
+				changespara(element, 'on');
+				document.getElementById('idnamn').value = namn;
+			};
+		};
+		function checkifsave() {
+			var element = document.getElementById('sparaknapp');
+			if(element.getAttribute('data-state') == 'on'){
+				var namn = document.getElementById('idnamn').value;
+				localStorage.setItem('tidlogganamn', namn);
+			}else{
+				localStorage.removeItem('tidlogganamn');
 			};
 		};
 	</script>
@@ -455,6 +484,9 @@
 		    opacity:0.8;
 		    z-index:1001;
 		}
+		.fa-toggle-on, .fa-toggle-on:hover {
+			color: green;
+		}
 	</style>
 </head>
 <body onload="load();">
@@ -470,6 +502,7 @@
 		</div>
 		<div id="login">
 			<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
+			<p><i class="fa fa-toggle-off fa-1x" aria-hidden="true" data-state="off" id="sparaknapp" onclick="changespara(this, 'on');"></i> Spara användarnamn</p>
 			<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i>
 			<!--<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">--><br/>
 			<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
@@ -581,6 +614,7 @@
 			location.reload();
 		});
 		function loggain(){
+			checkifsave();
 			var nameinput = document.getElementById('idnamn').value.toLowerCase();
 			showload();
 			socket.emit('checkuser', nameinput);
