@@ -503,10 +503,8 @@
 		<div id="login">
 			<input type="text" id="idnamn" onkeydown="checkkey(event, 'loginbutton', 'listaprojekt');" placeholder="VGR ID"><span id="namnstatus"></span><br/>
 			<p><i class="fa fa-toggle-off fa-1x" aria-hidden="true" data-state="off" id="sparaknapp" onclick="changespara(this, 'on');"></i> Spara användarnamn</p>
-			<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i>
-			<!--<input type="button" value="Logga In" id="loginbutton" onclick="loggain();">--><br/>
+			<i class="fa fa-sign-in fa-5x" aria-hidden="true" id="loginbutton" onclick="loggain();"></i><br/>
 			<p>Vill du testa funktionaliteten? Använd användarnamn: "test3".</p>
-			<!--<i class="fa fa-camera-retro fa-5x"></i>-->
 		</div>
 		<div id="projekt">
 			<select id="listaprojekt">
@@ -514,37 +512,26 @@
 			</select>
 			<div id="buttonwrapper">
 				<i class="fa fa-clock-o fa-4x" aria-hidden="true" onclick="valjprojekt();"></i>
-				<!--<input type="button" value="Klocka" onclick="valjprojekt();">-->
 				<i class="fa fa-list fa-4x" aria-hidden="true" onclick="getlogg();"></i>
-				<!--<input type="button" value="Logg" onclick="getlogg();">-->
 				<i class="fa fa-print fa-4x" aria-hidden="true" onclick="loadskrivut();"></i>
-				<!--<input type="button" value="Skriv ut..." onclick="loadskrivut();">-->
 				<i class="fa fa-pie-chart fa-4x" aria-hidden="true" onclick="getpie();"></i>
-				<!--<input type="button" value="Statistik" onclick="getpie();">-->
 			</div>
 		</div>
 		<div id="klocka">
 			<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakatillprojekt();"></i>
-			<!--<input type="button" value="Tillbaka" onclick="tillbakatillprojekt();">-->
 				<div id="klockadata">
 					<span id="intid">XX:XX</span> <span id="tid">XX:XX:XX</span>
 				</div>
 				<div class="center">
 				<i class="fa fa-play fa-3x in enable" aria-hidden="true" onclick="startclock('nu')"></i>
-				<!--<input type="button" value="Klocka in" class="in" onclick="startclock('nu')">-->
 				<i class="fa fa-stop fa-3x ut enable" aria-hidden="true" onclick="stopclock('nu');"></i>
-				<!--<input type="button" value="Klocka ut" class="ut" onclick="stopclock('nu');">-->
 				</div>
 				<p>Annan tid: <span class="checkboxwrapper"><i class="fa fa-play in enable" aria-hidden="true" onclick="annantid('in')"></i><i class="fa fa-stop ut enable" aria-hidden="true" onclick="annantid('ut');""></i></span><i class="fa fa-money" aria-hidden="true" onclick="showpengar();"></i></p>
-				<!--<input type="button" class="in" value="Klocka in annan tid" onclick="annantid('in');">
-				<input type="button" class="ut" value="Klocka ut annan tid" onclick="annantid('ut');">-->
 		</div>
 		<div id="klockaannantid">
 			<input type="date" id="dateannan"><input type="time" id="timeannan"><span id="datumstatus"></span><br/>
 			<i class="fa fa-check-circle fa-4x" aria-hidden="true" id="annantidbutton" onclick="startclock('annat')"></i>
-			<!--<input type="button" id="annantidbutton" value="Klocka in/ut" onclick="startclock('annat')">-->
 			<i class="fa fa-times-circle fa-4x" aria-hidden="true" id="annantidbutton" onclick="showhide('klockaannantid', 'klocka');"></i>
-			<!--<input type="button" id="annantidbutton" value="Avbryt" onclick="showhide('klockaannantid', 'klocka');">-->
 		</div>
 		<div id="loggwrapper">
 			
@@ -557,9 +544,7 @@
 			<input type="date" id="loggeditutdat"><br/>
 			<input type="time" id="loggedituttime"><br/>
 			<i class="fa fa-check-circle fa-4x" aria-hidden="true" onclick="sendedit();"></i>
-			<!--<input type="button" value="Spara" onclick="sendedit();">-->
 			<i class="fa fa-times-circle fa-4x" aria-hidden="true" onclick="avbrytedit();"></i>
-			<!--<input type="button" value="Avbryt" onclick="avbrytedit();">-->
 		</div>
 		<div id="skrivut">
 				
@@ -570,7 +555,6 @@
 		<div id="admin"></div>
 		<div id="statistik">
 			<i class="fa fa-arrow-circle-left fa-3x" aria-hidden="true" onclick="tillbakafranstatistik();"></i>
-			<!--<input type="button" value="Tillbaka" onclick="tillbakafranstatistik();">-->
 			<div id="piechart"></div>
 			<div class="center">
 				<table>
