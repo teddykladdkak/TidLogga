@@ -589,6 +589,10 @@
 		console.log(geturl);
 		var socket = io.connect(geturl);
 
+		socket.on('connect', function(){
+			console.log('Du är nu kopplad till socket.');
+		});
+
 		// Visar i console log status från server
 		socket.on('message', function(message) {
 			console.log(message);
