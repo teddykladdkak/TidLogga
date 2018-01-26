@@ -586,12 +586,7 @@
 		var geturl = window.location.href.replace('http://', '').replace('https://', '').split('/')[0];
 		
 		//Lyssnar om server säger något
-		console.log(geturl);
-		var socket = io.connect(geturl, { reconnect: true });
-
-		socket.on('connect', function(){
-			console.log('Du är nu kopplad till socket.');
-		});
+		var socket = io.connect(geturl);
 
 		// Visar i console log status från server
 		socket.on('message', function(message) {

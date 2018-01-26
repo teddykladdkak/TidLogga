@@ -102,8 +102,8 @@ function makedirektory(projekt, vgrid){
 
 
 // Loading socket.io
-var io = require('socket.io').listen(server);
-	io.set('transports', ['polling', 'websocket']);
+//var io = require('socket.io').listen(server);
+var io = require('socket.io')(server);
 io.sockets.on('connection', function (socket, username) {
 	// When the client connects, they are sent a message
 	socket.emit('message', 'You are connected!');
