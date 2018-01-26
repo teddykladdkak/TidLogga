@@ -587,7 +587,7 @@
 		
 		//Lyssnar om server säger något
 		console.log(geturl);
-		var socket = io.connect(geturl);
+		var socket = io.connect(geturl, { reconnect: true });
 
 		socket.on('connect', function(){
 			console.log('Du är nu kopplad till socket.');
