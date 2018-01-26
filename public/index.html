@@ -586,7 +586,8 @@
 		var geturl = window.location.href.replace('http://', '').replace('https://', '').split('/')[0];
 		
 		//Lyssnar om server säger något
-		var socket = io.connect(window.location.href.split('/')[0]);
+		console.log(geturl);
+		var socket = io.connect(geturl);
 
 		// Visar i console log status från server
 		socket.on('message', function(message) {
